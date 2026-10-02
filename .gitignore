@@ -1,0 +1,19 @@
+# Python 环境与缓存
+.venv/
+.uv-cache/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+# 构建产物
+build/
+dist/
+*.egg-info/
+
+# 本机编辑器与系统文件
+.idea/
+.DS_Store
+
+# 工作目录中的运行时交换文件
+.cdp
+.mouse

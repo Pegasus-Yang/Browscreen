@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "browscreen"
+version = "0.1.0"
+description = "浏览器视口截图与鼠标指针预览服务"
+readme = "README.md"
+requires-python = ">=3.14"
+authors = [{ name = "Pegasus-Yang", email = "panesas2@gmail.com" }]
+dependencies = [
+  "fastapi>=0.118,<1",
+  "uvicorn>=0.37,<1",
+  "pydantic>=2.12,<3",
+  "websockets>=15,<18",
+  "httpx>=0.28,<1",
+  "pillow>=12,<13",
+]
+
+[project.scripts]
+browscreen = "browscreen.main:main"
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "pytest-asyncio>=1,<2"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/browscreen"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
