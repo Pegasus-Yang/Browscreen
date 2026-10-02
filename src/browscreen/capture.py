@@ -1,0 +1,101 @@
+"""公共连接等待、单循环采集和最新帧发布。"""
+
+import asyncio
+import logging
+from asyncio import sleep
+from datetime import UTC, datetime
+from time import monotonic
+
+import httpx
+
+from browscreen.adapters.base import BrowserAdapter, BrowserAdapterError
+from browscreen.files import read_endpoint, read_mouse
+from browscreen.imaging import compose_screenshot
+from browscreen.models import CurrentFrame, ErrorResponse, Settings
+from browscreen.webhooks import push_frame
+
+logger = logging.getLogger(__name__)
+OPERATION_TIMEOUT_S = 5
+
+
+class CaptureService:
+    """驱动任意符合契约的浏览器适配器。
+
+    :param settings: 实例配置。
+    :param adapter: 已由应用选定的适配器。
+    :param client: 应用拥有的共享 HTTP 客户端。
+    """
+
+    def __init__(self, *, settings: Settings, adapter: BrowserAdapter, client: httpx.AsyncClient) -> None:
+        self.settings = settings
+        self.adapter = adapter
+        self.client = client
+        self.state = "waiting"
+        self.current_frame: CurrentFrame | None = None
+        self.frame_id = 0
+        self.webhooks: set[str] = set()
+
+    def unavailable_error(self) -> ErrorResponse:
+        """生成当前无图片状态的公共响应。"""
+        if self.state == "timed_out":
+            return ErrorResponse(code="browser_wait_timeout", message="等待浏览器连接超时，请修正端点后重启服务")
+        if self.state == "connected":
+            return ErrorResponse(code="screenshot_not_ready", message="浏览器已连接，正在生成首帧")
+        return ErrorResponse(code="waiting_for_browser", message="正在等待浏览器端点可用")
+
+    async def disconnect(self, *, timeout_s: float = 1) -> None:
+        """限时释放自身连接，清理失败记录日志。"""
+        try:
+            async with asyncio.timeout(delay=timeout_s):
+                await self.adapter.disconnect()
+        except Exception:
+            logger.exception("浏览器适配器连接清理失败")
+
+    async def _wait_for_browser(self) -> bool:
+        """每轮建立单调时钟截止时间，每次重试重新读文件。"""
+        self.state = "waiting"
+        deadline = monotonic() + self.settings.connect_wait_timeout_s
+        path = self.settings.work_dir / self.adapter.endpoint_file_name
+        logger.info(msg=f"等待浏览器端点：{path}，最长 {self.settings.connect_wait_timeout_s} 秒")
+        while (remaining := deadline - monotonic()) > 0:
+            try:
+                async with asyncio.timeout(delay=remaining):
+                    endpoint = await asyncio.to_thread(read_endpoint, path=path)
+                remaining = deadline - monotonic()
+                if endpoint and remaining > 0:
+                    budget = min(OPERATION_TIMEOUT_S, remaining)
+                    async with asyncio.timeout(delay=budget):
+                        await self.adapter.connect(endpoint=endpoint, timeout_s=budget)
+                    self.state = "connected"
+                    logger.info("浏览器已连接")
+                    return True
+            except (BrowserAdapterError, TimeoutError) as error:
+                logger.info(msg=f"浏览器暂不可用：{error!r}")
+                await self.disconnect(timeout_s=max(0, min(1, deadline - monotonic())))
+            await sleep(delay=min(self.settings.interval_ms / 1000, max(0, deadline - monotonic())))
+        self.state = "timed_out"
+        logger.warning("等待浏览器连接超时，停止采集与端点轮询")
+        return False
+
+    async def run(self) -> None:
+        """顺序采集、发布和发送；失效时清空缓存并重新等待。"""
+        while await self._wait_for_browser():
+            try:
+                while True:
+                    started = monotonic()
+                    timestamp = datetime.now(tz=UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+                    mouse = await asyncio.to_thread(read_mouse, path=self.settings.work_dir / ".mouse")
+                    async with asyncio.timeout(delay=OPERATION_TIMEOUT_S):
+                        screenshot = await self.adapter.capture_viewport(timeout_s=OPERATION_TIMEOUT_S)
+                    png = await asyncio.to_thread(compose_screenshot, screenshot=screenshot, mouse=mouse)
+                    self.frame_id += 1
+                    frame = CurrentFrame(frame_id=self.frame_id, capture_started_at=timestamp, png_bytes=png)
+                    urls = tuple(self.webhooks)
+                    self.current_frame = frame
+                    await push_frame(client=self.client, urls=urls, frame=frame)
+                    await sleep(delay=max(0, self.settings.interval_ms / 1000 - (monotonic() - started)))
+            except (BrowserAdapterError, TimeoutError) as error:
+                self.current_frame = None
+                self.state = "waiting"
+                logger.warning(msg=f"浏览器采集失效，开始恢复：{error!r}")
+                await self.disconnect()

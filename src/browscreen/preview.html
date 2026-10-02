@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>browscreen · 浏览器画面预览</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f3f4f6; color: #202632; font-family: system-ui, sans-serif; }
+    header { max-width: 1320px; margin: auto; padding: 24px 20px 16px; }
+    h1 { margin: 0 0 6px; font-size: 24px; letter-spacing: -.5px; }
+    p { margin: 4px 0; font-size: 14px; color: #5c6575; }
+    #status { color: #303b50; }
+    main { max-width: 1320px; margin: auto; padding: 0 20px 24px; }
+    img { display: block; width: 100%; height: auto; background: white; border-radius: 6px; box-shadow: 0 2px 16px #16233a14; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>browscreen</h1>
+    <p>浏览器画面预览 · 只读</p>
+    <p id="status" role="status" aria-live="polite">正在等待浏览器端点可用</p>
+    <p id="metadata"></p>
+  </header>
+  <main><img id="preview" alt="浏览器当前视口画面" hidden></main>
+  <script>
+    const intervalMs = __INTERVAL_MS__;
+    const preview = document.getElementById('preview');
+    const status = document.getElementById('status');
+    const metadata = document.getElementById('metadata');
+    const messages = {
+      waiting_for_browser: '正在等待浏览器端点可用',
+      screenshot_not_ready: '浏览器已连接，正在生成首帧',
+      browser_wait_timeout: '等待浏览器连接超时，请修正端点后重启服务'
+    };
+    let currentUrl = null;
+    let timer = null;
+    let stopped = false;
+
+    async function poll() {
+      let nextUrl = null;
+      try {
+        const response = await fetch('/api/screenshot', { cache: 'no-store' });
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(messages[error.code] || '预览暂时不可用，将自动重试');
+        }
+        nextUrl = URL.createObjectURL(await response.blob());
+        await new Promise((resolve, reject) => {
+          preview.onload = resolve;
+          preview.onerror = () => reject(new Error('图片加载失败，将自动重试'));
+          preview.src = nextUrl;
+        });
+        if (currentUrl) URL.revokeObjectURL(currentUrl);
+        currentUrl = nextUrl;
+        nextUrl = null;
+        preview.hidden = false;
+        status.textContent = '画面持续更新';
+        const startedAt = response.headers.get('X-Capture-Started-At');
+        metadata.textContent = `第 ${response.headers.get('X-Frame-Id')} 帧 · 采集开始 ${startedAt}`;
+      } catch (error) {
+        preview.hidden = true;
+        preview.removeAttribute('src');
+        if (currentUrl) URL.revokeObjectURL(currentUrl);
+        if (nextUrl) URL.revokeObjectURL(nextUrl);
+        currentUrl = null;
+        status.textContent = error.message;
+        metadata.textContent = '';
+      } finally {
+        preview.onload = null;
+        preview.onerror = null;
+        if (!stopped) timer = setTimeout(poll, intervalMs);
+      }
+    }
+    window.addEventListener('pagehide', () => {
+      stopped = true;
+      clearTimeout(timer);
+      if (currentUrl) URL.revokeObjectURL(currentUrl);
+    });
+    poll();
+  </script>
+</body>
+</html>
