@@ -1,0 +1,7 @@
+{
+  "signal": "SIGINT",
+  "mouse_exists": true,
+  "mouse_bytes": 0,
+  "cdp_preserved": true,
+  "both_browsers_running_after_service_exit": true
+}

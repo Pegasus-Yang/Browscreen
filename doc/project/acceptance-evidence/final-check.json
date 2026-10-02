@@ -1,0 +1,9 @@
+{
+  "markdown_files": 8,
+  "local_links_checked": 53,
+  "shell_blocks_checked": 13,
+  "verification_items_passed": 49,
+  "pytest": "90 passed, no warnings",
+  "wheel_resources": "通过",
+  "test_processes_and_directories": "已回收"
+}

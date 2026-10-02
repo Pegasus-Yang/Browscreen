@@ -1,0 +1,19 @@
+{
+  "time": "2026-10-02T10:09:48+08:00",
+  "system": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "python": "3.14.7",
+  "python_executable": "/Users/pegasus-yang/Projects/SandBoxProjects/Browscreen/.venv/bin/python",
+  "uv": "uv 0.12.21 (Homebrew 2026-09-29 aarch64-apple-darwin)",
+  "chrome": "Chrome/154.0.8037.95",
+  "packages": {
+    "browscreen": "0.1.0",
+    "fastapi": "0.142.2",
+    "pydantic": "2.13.5",
+    "uvicorn": "0.54.0",
+    "websockets": "17.1",
+    "httpx": "0.28.1",
+    "pillow": "12.3.0",
+    "pytest": "9.1.1",
+    "pytest-asyncio": "1.4.0"
+  }
+}

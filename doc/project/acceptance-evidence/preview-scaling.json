@@ -1,0 +1,33 @@
+{
+  "normal": {
+    "displayHeight": 640.5,
+    "displayWidth": 1280,
+    "hidden": false,
+    "metadata": "第 340 帧 · 采集开始 2026-10-02T01:59:43.851Z",
+    "naturalHeight": 633,
+    "naturalWidth": 1265,
+    "url": "http://127.0.0.1:53557/",
+    "x": 182.5,
+    "y": 146
+  },
+  "half": {
+    "displayHeight": 320.25,
+    "displayWidth": 640,
+    "hidden": false,
+    "metadata": "第 340 帧 · 采集开始 2026-10-02T01:59:43.851Z",
+    "naturalHeight": 633,
+    "naturalWidth": 1265,
+    "url": "http://127.0.0.1:53557/",
+    "x": 20,
+    "y": 146
+  },
+  "widthRatio": 0.5,
+  "expectedAInNormal": [
+    323.79446640316206,
+    182.13270142180096
+  ],
+  "expectedAInHalf": [
+    161.89723320158103,
+    91.06635071090048
+  ]
+}

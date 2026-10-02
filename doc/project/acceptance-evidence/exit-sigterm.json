@@ -1,0 +1,8 @@
+{
+  "signal": "SIGTERM",
+  "mouse_exists": true,
+  "mouse_bytes": 0,
+  "cdp_preserved": true,
+  "old_browser_running": true,
+  "new_browser_running": true
+}

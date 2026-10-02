@@ -1,0 +1,24 @@
+{
+  "root": "/private/tmp/browscreen-acceptance-4tf83b8w",
+  "work_dir": "/private/tmp/browscreen-acceptance-4tf83b8w/work",
+  "chrome_profile": "/private/tmp/browscreen-acceptance-4tf83b8w/chrome-profile",
+  "evidence": "/Users/pegasus-yang/Projects/SandBoxProjects/Browscreen/doc/project/acceptance-evidence",
+  "service_port": 53557,
+  "preview_url": "http://127.0.0.1:53557/",
+  "cdp_port": 55677,
+  "cdp_url": "http://127.0.0.1:55677",
+  "service_pid": 1262,
+  "webhook_urls": [
+    "http://127.0.0.1:55822/frames",
+    "http://127.0.0.1:55823/frames",
+    "http://127.0.0.1:55824/frames"
+  ],
+  "old_cdp_url": "http://127.0.0.1:53985",
+  "cleanup": {
+    "completed_at": "2026-10-02T10:12:37+08:00",
+    "service_stopped": true,
+    "test_browsers_closed_by_preparation_script": true,
+    "temporary_work_and_profiles_removed": true
+  },
+  "recovery_chrome_profile": "/private/tmp/browscreen-acceptance-4tf83b8w/chrome-profile-recovery"
+}

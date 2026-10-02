@@ -1,0 +1,24 @@
+{
+  "old_url": "http://127.0.0.1:53985",
+  "new_url": "http://127.0.0.1:55677",
+  "status": 200,
+  "frame_id": "983",
+  "css_size": [
+    1280.0,
+    633.0
+  ],
+  "png_size": [
+    1280,
+    633
+  ],
+  "target": {
+    "url": "https://ceshiren.com/",
+    "title": "爱测-测试人社区 - 软件测试开发爱好者的交流社区，交流范围涵盖软件测试、自动化测试、UI测试、接口测试、性能测试、安全测试、测试开发、测试平台、开源测试、测试教程、测试面试题、appium、selenium、jmeter、jenkins"
+  },
+  "mouse_preserved": true,
+  "registration_duplicate_statuses": [
+    200,
+    200,
+    200
+  ]
+}

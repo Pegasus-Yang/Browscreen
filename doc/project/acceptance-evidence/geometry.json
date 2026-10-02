@@ -1,0 +1,43 @@
+{
+  "css_viewport": [
+    1265.0,
+    633.0
+  ],
+  "png_size": [
+    1265,
+    633
+  ],
+  "baseline_frame": {
+    "date": "Fri, 02 Oct 2026 01:58:24 GMT",
+    "server": "uvicorn",
+    "cache-control": "no-store",
+    "x-frame-id": "81",
+    "x-capture-started-at": "2026-10-02T01:58:25.689Z",
+    "content-length": "130998",
+    "content-type": "image/png"
+  },
+  "browser": "Chrome/154.0.8037.95",
+  "mouse_after_sigint_bytes": 0,
+  "five_sequential_capture_sizes": [
+    [
+      1265.0,
+      633.0
+    ],
+    [
+      1265.0,
+      633.0
+    ],
+    [
+      1265.0,
+      633.0
+    ],
+    [
+      1265.0,
+      633.0
+    ],
+    [
+      1265.0,
+      633.0
+    ]
+  ]
+}
