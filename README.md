@@ -1,5 +1,7 @@
 # browscreen
 
+简体中文 | [English](README.en.md)
+
 browscreen（browser＋screen）是浏览器画面与鼠标指针预览服务。它通过浏览器适配器连接已有浏览器，默认每 300 毫秒截图，读取工作目录中的 `.mouse` 合成指针；网页、图片接口和 webhook 共用同一张 PNG。当前支持 Chrome＋CDP，浏览器和并行环境由主服务管理。
 
 服务采用 Python 3.14、FastAPI 和 Pydantic v2，一个进程、一个采集循环和一个最新帧缓存。适配器负责端点发现与截图，公共流程负责调度、合成和输出。
