@@ -48,7 +48,7 @@ Normal shutdown, including graceful SIGINT or SIGTERM handling, clears the conte
 
 - [Installation and deployment](doc/deployment/安装与运行.en.md): prerequisites, installation, startup options, lifecycle, troubleshooting, and building.
 - [User guide](doc/user-guide/使用说明.en.md): endpoint and pointer files, preview behavior, screenshot responses, and webhook integration.
-- [Documentation index](doc/README.md): the complete project documentation, including Chinese design and validation records.
+- [Documentation index](doc/README.md): the project documentation, including Chinese design and implementation guides.
 
 These English documents describe the current service. The preview interface, CLI descriptions, and runtime messages are currently in Simplified Chinese. API clients can use the stable error `code` values documented in the user guide.
 

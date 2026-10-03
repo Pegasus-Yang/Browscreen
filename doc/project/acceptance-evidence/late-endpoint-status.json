@@ -1,7 +1,0 @@
-{
-  "status": 503,
-  "body": {
-    "code": "browser_wait_timeout",
-    "message": "等待浏览器连接超时，请修正端点后重启服务"
-  }
-}

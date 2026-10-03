@@ -1,7 +1,0 @@
-{
-  "status": 503,
-  "body": {
-    "code": "waiting_for_browser",
-    "message": "正在等待浏览器端点可用"
-  }
-}

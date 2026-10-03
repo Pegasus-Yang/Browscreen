@@ -41,9 +41,7 @@ uv run --no-sync browscreen --work-dir /absolute/path/to/workspace
 - [安装与运行](doc/deployment/安装与运行.md)：环境、参数、启动和构建。
 - [使用说明](doc/user-guide/使用说明.md)：文件协议、图片和 webhook。
 - [设计方案](doc/design/设计方案.md)：适配器边界、状态和几何契约。
-- [实施方案](doc/design/具体实施方案.md)与[阶段审核清单](doc/design/阶段核验清单.md)：实施步骤和验证出口。
-- [本机验收记录](doc/project/本机验收记录.md)：真实运行版本、Chrome 预览、指针、恢复和退出证据。
-- [审核问题修复记录](doc/project/审核问题修复记录-2026-10-03.md)：恢复预算、异常状态、预览生命周期及性能优化的最新验证。
+- [实施方案](doc/design/具体实施方案.md)：实施步骤和验证方法。
 
 完整导航见[doc/README.md](doc/README.md)。运行自动验证：
 
