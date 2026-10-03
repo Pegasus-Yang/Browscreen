@@ -70,7 +70,7 @@ class ChromeCdpAdapter:
                         raise BrowserAdapterError("浏览器没有已有页面")
                     attached = await self._command(method="Target.attachToTarget", params={"targetId": target["targetId"], "flatten": True})
                     self.session_id = attached["sessionId"]
-        except (httpx.HTTPError, WebSocketException, OSError, TimeoutError, ValueError, KeyError, TypeError) as error:
+        except (httpx.HTTPError, httpx.InvalidURL, WebSocketException, OSError, TimeoutError, ValueError, KeyError, TypeError) as error:
             raise BrowserAdapterError(f"Chrome 连接失败：{error}") from error
 
     async def _command(self, *, method: str, params: dict | None = None) -> dict:

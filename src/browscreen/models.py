@@ -49,7 +49,7 @@ class WebhookRegistration(BaseModel):
 class ErrorResponse(BaseModel):
     """截图不可用时的公共错误响应。"""
 
-    code: Literal["waiting_for_browser", "screenshot_not_ready", "browser_wait_timeout"]
+    code: Literal["waiting_for_browser", "screenshot_not_ready", "browser_wait_timeout", "capture_failed"]
     message: str
 
 

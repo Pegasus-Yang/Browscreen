@@ -32,6 +32,8 @@ uv run --no-sync browscreen --work-dir /absolute/path/to/workspace
 
 截图与发送顺序执行。慢 webhook 会降低采集频率，每帧仍尝试推送，发送最长 3 秒。连接失效后清空旧图、重新读取端点并恢复；注册保留至进程结束。正常停止或 SIGINT／SIGTERM 优雅退出时，已有 `.mouse` 内容清空，`.cdp` 和外部 Chrome 保留。
 
+每轮连接等待持续到首个有效帧生成，连续截图失败会按间隔重试并在预算耗尽后停止。预览支持历史缓存恢复、5 秒读取超时和重复帧跳过加载；采集任务异常停止时返回 `capture_failed`，提示检查日志后重启。
+
 ## 文档与验证
 
 - [安装与运行](doc/deployment/安装与运行.md)：环境、参数、启动和构建。
@@ -39,8 +41,11 @@ uv run --no-sync browscreen --work-dir /absolute/path/to/workspace
 - [设计方案](doc/design/设计方案.md)：适配器边界、状态和几何契约。
 - [实施方案](doc/design/具体实施方案.md)与[阶段审核清单](doc/design/阶段核验清单.md)：实施步骤和验证出口。
 - [本机验收记录](doc/project/本机验收记录.md)：真实运行版本、Chrome 预览、指针、恢复和退出证据。
+- [审核问题修复记录](doc/project/审核问题修复记录-2026-10-03.md)：恢复预算、异常状态、预览生命周期及性能优化的最新验证。
 
 完整导航见[doc/README.md](doc/README.md)。运行自动验证：
+
+完整验证需同时具备 Node.js 22 或更高版本；预览回归由 pytest 调用 Node 内置测试运行器，无 npm 依赖。
 
 ```sh
 .venv/bin/python -m pytest -q -W error

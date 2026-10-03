@@ -1,0 +1,8 @@
+{
+  "test_cache_headers_removed": true,
+  "persisted": true,
+  "first": "第 20 帧 · 采集开始 2026-10-03T01:15:15.654Z",
+  "restored": "第 24 帧 · 采集开始 2026-10-03T01:15:15.776Z",
+  "later": "第 29 帧 · 采集开始 2026-10-03T01:15:15.929Z",
+  "notRestored": []
+}

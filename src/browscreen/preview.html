@@ -32,51 +32,106 @@
     const messages = {
       waiting_for_browser: '正在等待浏览器端点可用',
       screenshot_not_ready: '浏览器已连接，正在生成首帧',
-      browser_wait_timeout: '等待浏览器连接超时，请修正端点后重启服务'
+      browser_wait_timeout: '等待浏览器连接超时，请修正端点后重启服务',
+      capture_failed: '采集任务异常停止，请检查服务日志后重启'
     };
+    const requestTimeoutMs = 5000;
     let currentUrl = null;
+    let currentFrameKey = null;
+    let activeRequest = null;
     let timer = null;
     let stopped = false;
 
+    function clearPreview() {
+      preview.hidden = true;
+      preview.removeAttribute('src');
+      if (currentUrl) URL.revokeObjectURL(currentUrl);
+      currentUrl = null;
+      currentFrameKey = null;
+      metadata.textContent = '';
+    }
+
+    function loadImage(url, signal) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        function finish(error) {
+          image.onload = null;
+          image.onerror = null;
+          signal.removeEventListener('abort', abort);
+          if (error) {
+            image.removeAttribute('src');
+            reject(error);
+          } else {
+            resolve();
+          }
+        }
+        function abort() { finish(signal.reason); }
+        image.onload = () => finish();
+        image.onerror = () => finish(new Error('图片加载失败，将自动重试'));
+        signal.addEventListener('abort', abort, { once: true });
+        if (signal.aborted) abort();
+        else image.src = url;
+      });
+    }
+
     async function poll() {
+      if (stopped || activeRequest) return;
+      const controller = new AbortController();
+      activeRequest = controller;
+      const timeout = setTimeout(() => {
+        controller.abort(new Error('预览请求超时，将自动重试'));
+      }, requestTimeoutMs);
       let nextUrl = null;
       try {
-        const response = await fetch('/api/screenshot', { cache: 'no-store' });
+        const response = await fetch('/api/screenshot', { cache: 'no-store', signal: controller.signal });
         if (!response.ok) {
           const error = await response.json();
           throw new Error(messages[error.code] || '预览暂时不可用，将自动重试');
         }
-        nextUrl = URL.createObjectURL(await response.blob());
-        await new Promise((resolve, reject) => {
-          preview.onload = resolve;
-          preview.onerror = () => reject(new Error('图片加载失败，将自动重试'));
-          preview.src = nextUrl;
-        });
+        const frameId = response.headers.get('X-Frame-Id');
+        const startedAt = response.headers.get('X-Capture-Started-At');
+        const frameKey = frameId && startedAt ? `${frameId}/${startedAt}` : null;
+        const blob = await response.blob();
+        controller.signal.throwIfAborted();
+        // 帧号与时间共同判断，服务重启后仍接受较小或重复的帧号。
+        if (frameKey && frameKey === currentFrameKey && currentUrl) return;
+        nextUrl = URL.createObjectURL(blob);
+        await loadImage(nextUrl, controller.signal);
+        controller.signal.throwIfAborted();
+        preview.src = nextUrl;
         if (currentUrl) URL.revokeObjectURL(currentUrl);
         currentUrl = nextUrl;
+        currentFrameKey = frameKey;
         nextUrl = null;
         preview.hidden = false;
         status.textContent = '画面持续更新';
-        const startedAt = response.headers.get('X-Capture-Started-At');
-        metadata.textContent = `第 ${response.headers.get('X-Frame-Id')} 帧 · 采集开始 ${startedAt}`;
+        metadata.textContent = `第 ${frameId} 帧 · 采集开始 ${startedAt}`;
       } catch (error) {
-        preview.hidden = true;
-        preview.removeAttribute('src');
-        if (currentUrl) URL.revokeObjectURL(currentUrl);
-        if (nextUrl) URL.revokeObjectURL(nextUrl);
-        currentUrl = null;
-        status.textContent = error.message;
-        metadata.textContent = '';
+        // 离开页面的取消不覆盖恢复后的状态；网络超时仍显示明确提示。
+        const failure = controller.signal.aborted ? controller.signal.reason : error;
+        if (!stopped && failure.name !== 'AbortError') {
+          clearPreview();
+          status.textContent = failure.message;
+        }
       } finally {
-        preview.onload = null;
-        preview.onerror = null;
+        clearTimeout(timeout);
+        if (nextUrl) URL.revokeObjectURL(nextUrl);
+        activeRequest = null;
         if (!stopped) timer = setTimeout(poll, intervalMs);
       }
     }
     window.addEventListener('pagehide', () => {
       stopped = true;
       clearTimeout(timer);
-      if (currentUrl) URL.revokeObjectURL(currentUrl);
+      activeRequest?.abort();
+      clearPreview();
+    });
+    window.addEventListener('pageshow', event => {
+      if (!event.persisted || !stopped) return;
+      stopped = false;
+      status.textContent = '正在恢复预览';
+      // 在途请求先完成取消清理，再由其 finally 调度，避免并行轮询。
+      if (!activeRequest) poll();
     });
     poll();
   </script>

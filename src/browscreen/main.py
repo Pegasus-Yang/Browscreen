@@ -20,7 +20,7 @@ def parse_settings(*, argv: list[str] | None = None) -> Settings:
     parser.add_argument("--work-dir", required=True, help="已有的文件交换工作目录")
     parser.add_argument("--adapter", default="chrome-cdp", help="浏览器适配器（chrome-cdp）")
     parser.add_argument("--interval-ms", type=int, default=300, help="截图与端点重试间隔（毫秒）")
-    parser.add_argument("--connect-wait-timeout-s", type=float, default=60, help="每轮连接等待上限（秒）")
+    parser.add_argument("--connect-wait-timeout-s", type=float, default=60, help="每轮等待首个有效帧的上限（秒）")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     arguments = parser.parse_args(args=argv)

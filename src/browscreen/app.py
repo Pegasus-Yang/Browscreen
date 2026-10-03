@@ -33,7 +33,18 @@ def create_app(*, settings: Settings, adapter: BrowserAdapter | None = None, cli
         browser = adapter if adapter is not None else ADAPTER_FACTORIES[settings.adapter](client=http_client)
         service = CaptureService(settings=settings, adapter=browser, client=http_client)
         app.state.capture = service
-        task = asyncio.create_task(coro=service.run(), name="browscreen-capture")
+
+        async def capture() -> None:
+            """立即报告未预期的任务异常，并停止提供旧图。"""
+            try:
+                await service.run()
+            except Exception:
+                service.current_frame = None
+                service.state = "failed"
+                logger.exception("采集任务异常停止")
+                await service.disconnect()
+
+        task = asyncio.create_task(coro=capture(), name="browscreen-capture")
         try:
             yield
         finally:

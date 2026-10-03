@@ -1,0 +1,13 @@
+{
+  "test_cache_headers_removed": false,
+  "persisted": false,
+  "first": "第 21 帧 · 采集开始 2026-10-03T01:13:24.192Z",
+  "restored": "第 30 帧 · 采集开始 2026-10-03T01:13:24.470Z",
+  "later": "第 35 帧 · 采集开始 2026-10-03T01:13:24.625Z",
+  "notRestoredReasons": [
+    "MainResourceHasCacheControlNoStore",
+    "JsNetworkRequestReceivedCacheControlNoStoreResource",
+    "BrowsingInstanceNotSwapped"
+  ],
+  "note": "首次真实浏览器核验的摘录。普通返回后帧继续增长，但缓存恢复断言未通过；不将该次运行计为 bfcache 验证通过。"
+}

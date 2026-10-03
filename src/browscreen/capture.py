@@ -37,6 +37,8 @@ class CaptureService:
 
     def unavailable_error(self) -> ErrorResponse:
         """生成当前无图片状态的公共响应。"""
+        if self.state == "failed":
+            return ErrorResponse(code="capture_failed", message="采集任务异常停止，请检查服务日志后重启")
         if self.state == "timed_out":
             return ErrorResponse(code="browser_wait_timeout", message="等待浏览器连接超时，请修正端点后重启服务")
         if self.state == "connected":
@@ -51,12 +53,11 @@ class CaptureService:
         except Exception:
             logger.exception("浏览器适配器连接清理失败")
 
-    async def _wait_for_browser(self) -> bool:
-        """每轮建立单调时钟截止时间，每次重试重新读文件。"""
+    async def _wait_for_browser(self, *, deadline: float) -> bool:
+        """沿用本轮恢复截止时间，每次重试重新读文件。"""
         self.state = "waiting"
-        deadline = monotonic() + self.settings.connect_wait_timeout_s
         path = self.settings.work_dir / self.adapter.endpoint_file_name
-        logger.info(msg=f"等待浏览器端点：{path}，最长 {self.settings.connect_wait_timeout_s} 秒")
+        logger.info(msg=f"等待浏览器端点：{path}，本轮剩余 {max(0, deadline - monotonic()):.3f} 秒")
         while (remaining := deadline - monotonic()) > 0:
             try:
                 async with asyncio.timeout(delay=remaining):
@@ -79,15 +80,21 @@ class CaptureService:
 
     async def run(self) -> None:
         """顺序采集、发布和发送；失效时清空缓存并重新等待。"""
-        while await self._wait_for_browser():
+        deadline = monotonic() + self.settings.connect_wait_timeout_s
+        while await self._wait_for_browser(deadline=deadline):
             try:
                 while True:
                     started = monotonic()
                     timestamp = datetime.now(tz=UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
-                    mouse = await asyncio.to_thread(read_mouse, path=self.settings.work_dir / ".mouse")
-                    async with asyncio.timeout(delay=OPERATION_TIMEOUT_S):
-                        screenshot = await self.adapter.capture_viewport(timeout_s=OPERATION_TIMEOUT_S)
-                    png = await asyncio.to_thread(compose_screenshot, screenshot=screenshot, mouse=mouse)
+                    # 首个有效帧产出前，连接、文件读取和图片合成共用恢复预算。
+                    remaining = None if deadline is None else max(0, deadline - monotonic())
+                    async with asyncio.timeout(delay=remaining):
+                        mouse = await asyncio.to_thread(read_mouse, path=self.settings.work_dir / ".mouse")
+                        budget = OPERATION_TIMEOUT_S if deadline is None else max(0, min(OPERATION_TIMEOUT_S, deadline - monotonic()))
+                        async with asyncio.timeout(delay=budget):
+                            screenshot = await self.adapter.capture_viewport(timeout_s=budget)
+                        png = await asyncio.to_thread(compose_screenshot, screenshot=screenshot, mouse=mouse)
+                    deadline = None
                     self.frame_id += 1
                     frame = CurrentFrame(frame_id=self.frame_id, capture_started_at=timestamp, png_bytes=png)
                     urls = tuple(self.webhooks)
@@ -98,4 +105,7 @@ class CaptureService:
                 self.current_frame = None
                 self.state = "waiting"
                 logger.warning(msg=f"浏览器采集失效，开始恢复：{error!r}")
-                await self.disconnect()
+                if deadline is None:
+                    deadline = monotonic() + self.settings.connect_wait_timeout_s
+                await self.disconnect(timeout_s=max(0, min(1, deadline - monotonic())))
+                await sleep(delay=min(self.settings.interval_ms / 1000, max(0, deadline - monotonic())))
