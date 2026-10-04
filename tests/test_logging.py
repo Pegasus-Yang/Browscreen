@@ -1,28 +1,50 @@
 """高频失败日志去重与状态转换验证。"""
 
 import logging
+from threading import Event
 
 import pytest
 
+import browscreen.capture as capture_module
 from browscreen.adapters.base import BrowserAdapterError
 from browscreen.app import create_app
 from browscreen.models import Settings
 
 
 @pytest.mark.parametrize("verbose", [False, True])
-async def test_repeated_connection_failures_only_have_debug_details(tmp_path, fake_adapter, wait_for, caplog, verbose):
+@pytest.mark.parametrize("endpoint_read_timeout", [False, True])
+async def test_repeated_connection_failures_only_have_debug_details(tmp_path, fake_adapter, wait_for, monkeypatch, caplog, verbose, endpoint_read_timeout):
     caplog.set_level(level=logging.DEBUG if verbose else logging.INFO, logger="browscreen.capture")
     (tmp_path / ".browser").write_text(data="unavailable", encoding="utf-8")
     fake_adapter.fail_connect = True
+    release = Event()
+    original_read = capture_module.read_endpoint
+
+    def read_endpoint(*, path):
+        """在两次连接失败后模拟读取等待截止。"""
+        if len(fake_adapter.connections) >= 2:
+            release.wait(timeout=1)
+        return original_read(path=path)
+
+    if endpoint_read_timeout:
+        monkeypatch.setattr(capture_module, "read_endpoint", read_endpoint)
     app = create_app(settings=Settings(work_dir=tmp_path, interval_ms=5, connect_wait_timeout_s=0.05), adapter=fake_adapter)
-    async with app.router.lifespan_context(app):
-        await wait_for(lambda: app.state.capture.state == "timed_out")
-        assert len(fake_adapter.connections) >= 2
+    try:
+        async with app.router.lifespan_context(app):
+            await wait_for(lambda: app.state.capture.state == "timed_out")
+            assert len(fake_adapter.connections) >= 2
+    finally:
+        release.set()
     records = [record for record in caplog.records if record.name == "browscreen.capture"]
     assert sum("开始等待浏览器画面" in record.message for record in records) == 1
     assert sum("等待浏览器连接超时" in record.message for record in records) == 1
     details = [record for record in records if "浏览器暂不可用" in record.message]
-    assert len(details) == (len(fake_adapter.connections) if verbose else 0)
+    connection_details = [record for record in details if "模拟连接失败" in record.message]
+    assert len(connection_details) == (len(fake_adapter.connections) if verbose else 0)
+    if not verbose:
+        assert details == []
+    if endpoint_read_timeout and verbose:
+        assert any("TimeoutError" in record.message for record in details)
     assert all(record.levelno == logging.DEBUG for record in details)
 
 
