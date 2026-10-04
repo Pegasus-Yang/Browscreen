@@ -11,6 +11,7 @@ English documentation: [Project overview](../README.en.md) · [Installation and 
 | 命令参考 | [命令行](reference/命令行.md) / [English](reference/命令行.en.md) | 已安装命令、启动参数、版本查询和日志级别 |
 | 技术设计 | [设计方案](design/设计方案.md) | 适配器、状态、坐标和接口契约 |
 | 实施计划 | [具体实施方案](design/具体实施方案.md) | 七阶段实施和本机验收步骤 |
+| 版本历史 | [changelog.md](../changelog.md) | 各版本的新增、变更和修复 |
 
 使用服务先阅读安装、命令行与使用说明；维护代码时阅读设计和实施文档。历史设计与实施过程保留在 `design/`，当前命令和日志行为以命令参考为准。
 

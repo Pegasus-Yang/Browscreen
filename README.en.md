@@ -74,6 +74,7 @@ Each capture waits for concurrent delivery attempts to all registered receivers.
 - [Command-line reference](doc/reference/命令行.en.md): commands, options, and logging levels.
 - [User guide](doc/user-guide/使用说明.en.md): exchange files, preview, screenshots, and webhooks.
 - [Documentation index](doc/README.md): reading routes and Chinese technical design documents.
+- [Changelog](changelog.md): additions, changes, and fixes by version, in Simplified Chinese.
 
 The preview UI, CLI help, and runtime messages are currently in Simplified Chinese. Use the stable API error `code` values for programmatic handling.
 

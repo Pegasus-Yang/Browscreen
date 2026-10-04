@@ -74,6 +74,7 @@ uv run --no-sync browscreen --work-dir "$work_dir"
 - [命令行参考](doc/reference/命令行.md)：命令、参数和日志级别。
 - [使用说明](doc/user-guide/使用说明.md)：文件协议、预览、图片和 webhook。
 - [文档导航](doc/README.md)：完整阅读路线和技术设计。
+- [版本变动历史](changelog.md)：各版本的新增、变更和修复。
 
 ## 开发与贡献
 
