@@ -51,4 +51,4 @@ def clear_mouse(*, path: Path) -> None:
     except OSError:
         logger.exception(msg=f"无法清空鼠标坐标文件：{path}")
     else:
-        logger.info(msg=f"已清空鼠标坐标文件：{path}")
+        logger.debug(msg=f"已清空鼠标坐标文件：{path}")

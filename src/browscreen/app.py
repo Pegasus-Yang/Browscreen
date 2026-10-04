@@ -9,6 +9,7 @@ import httpx
 from fastapi import FastAPI, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from browscreen import __version__
 from browscreen.adapters.base import BrowserAdapter
 from browscreen.adapters.chrome_cdp import ChromeCdpAdapter
 from browscreen.capture import CaptureService
@@ -63,7 +64,7 @@ def create_app(*, settings: Settings, adapter: BrowserAdapter | None = None, cli
             finally:
                 await asyncio.to_thread(clear_mouse, path=settings.work_dir / ".mouse")
 
-    app = FastAPI(title="browscreen", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="browscreen", version=__version__, lifespan=lifespan)
     preview = files(anchor="browscreen").joinpath("preview.html").read_text(encoding="utf-8").replace("__INTERVAL_MS__", str(settings.interval_ms))
 
     @app.get("/", response_class=HTMLResponse)

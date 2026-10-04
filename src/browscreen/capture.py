@@ -34,6 +34,7 @@ class CaptureService:
         self.current_frame: CurrentFrame | None = None
         self.frame_id = 0
         self.webhooks: set[str] = set()
+        self.failed_webhooks: set[str] = set()
 
     def unavailable_error(self) -> ErrorResponse:
         """生成当前无图片状态的公共响应。"""
@@ -57,7 +58,7 @@ class CaptureService:
         """沿用本轮恢复截止时间，每次重试重新读文件。"""
         self.state = "waiting"
         path = self.settings.work_dir / self.adapter.endpoint_file_name
-        logger.info(msg=f"等待浏览器端点：{path}，本轮剩余 {max(0, deadline - monotonic()):.3f} 秒")
+        logger.debug(msg=f"等待浏览器端点：{path}，本轮剩余 {max(0, deadline - monotonic()):.3f} 秒")
         while (remaining := deadline - monotonic()) > 0:
             try:
                 async with asyncio.timeout(delay=remaining):
@@ -68,10 +69,10 @@ class CaptureService:
                     async with asyncio.timeout(delay=budget):
                         await self.adapter.connect(endpoint=endpoint, timeout_s=budget)
                     self.state = "connected"
-                    logger.info("浏览器已连接")
+                    logger.debug("浏览器已连接")
                     return True
             except (BrowserAdapterError, TimeoutError) as error:
-                logger.info(msg=f"浏览器暂不可用：{error!r}")
+                logger.debug(msg=f"浏览器暂不可用：{error!r}")
                 await self.disconnect(timeout_s=max(0, min(1, deadline - monotonic())))
             await sleep(delay=min(self.settings.interval_ms / 1000, max(0, deadline - monotonic())))
         self.state = "timed_out"
@@ -81,6 +82,7 @@ class CaptureService:
     async def run(self) -> None:
         """顺序采集、发布和发送；失效时清空缓存并重新等待。"""
         deadline = monotonic() + self.settings.connect_wait_timeout_s
+        logger.info(msg=f"开始等待浏览器画面，等待上限 {self.settings.connect_wait_timeout_s:g} 秒")
         while await self._wait_for_browser(deadline=deadline):
             try:
                 while True:
@@ -94,18 +96,21 @@ class CaptureService:
                         async with asyncio.timeout(delay=budget):
                             screenshot = await self.adapter.capture_viewport(timeout_s=budget)
                         png = await asyncio.to_thread(compose_screenshot, screenshot=screenshot, mouse=mouse)
+                    if deadline is not None:
+                        logger.info("浏览器画面已就绪" if self.frame_id == 0 else "浏览器画面已恢复")
                     deadline = None
                     self.frame_id += 1
                     frame = CurrentFrame(frame_id=self.frame_id, capture_started_at=timestamp, png_bytes=png)
                     urls = tuple(self.webhooks)
                     self.current_frame = frame
-                    await push_frame(client=self.client, urls=urls, frame=frame)
+                    await push_frame(client=self.client, urls=urls, frame=frame, failed_urls=self.failed_webhooks)
                     await sleep(delay=max(0, self.settings.interval_ms / 1000 - (monotonic() - started)))
             except (BrowserAdapterError, TimeoutError) as error:
                 self.current_frame = None
                 self.state = "waiting"
-                logger.warning(msg=f"浏览器采集失效，开始恢复：{error!r}")
                 if deadline is None:
+                    logger.warning(msg=f"浏览器采集失效，开始恢复：{error!r}")
                     deadline = monotonic() + self.settings.connect_wait_timeout_s
+                logger.debug(msg=f"浏览器采集失败：{error!r}")
                 await self.disconnect(timeout_s=max(0, min(1, deadline - monotonic())))
                 await sleep(delay=min(self.settings.interval_ms / 1000, max(0, deadline - monotonic())))

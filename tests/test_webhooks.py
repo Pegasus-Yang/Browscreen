@@ -2,6 +2,7 @@
 
 import asyncio
 import hashlib
+import logging
 from io import BytesIO
 
 import httpx
@@ -106,7 +107,33 @@ async def test_send_failures_are_independent_and_bounded(failure, png_bytes, mon
     frame = CurrentFrame(frame_id=1, capture_started_at="2026-10-02T00:00:00Z", png_bytes=png_bytes)
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler=handle), follow_redirects=True) as client:
         started = asyncio.get_running_loop().time()
-        await push_frame(client=client, urls=("http://bad/", "http://good/"), frame=frame)
+        await push_frame(client=client, urls=("http://bad/", "http://good/"), frame=frame, failed_urls=set())
         assert asyncio.get_running_loop().time() - started < 0.1
     assert sorted(calls) == ["bad", "good"]
     assert "webhook 发送失败" in caplog.text
+
+
+async def test_webhook_logs_failures_once_then_reports_recovery(png_bytes, caplog):
+    caplog.set_level(level=logging.DEBUG, logger="browscreen.webhooks")
+    status, calls = 500, []
+
+    def handle(request):
+        calls.append(request.url.host)
+        return httpx.Response(status_code=status if request.url.host == "bad" else 204)
+
+    failed_urls = set()
+    frame = CurrentFrame(frame_id=1, capture_started_at="2026-10-02T00:00:00Z", png_bytes=png_bytes)
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler=handle)) as client:
+        for _ in range(3):
+            await push_frame(client=client, urls=("http://bad/", "http://good/"), frame=frame, failed_urls=failed_urls)
+        assert failed_urls == {"http://bad/"}
+        status = 204
+        await push_frame(client=client, urls=("http://bad/", "http://good/"), frame=frame, failed_urls=failed_urls)
+        assert failed_urls == set()
+        status = 500
+        await push_frame(client=client, urls=("http://bad/", "http://good/"), frame=frame, failed_urls=failed_urls)
+    records = [record for record in caplog.records if record.name == "browscreen.webhooks"]
+    assert sum(record.levelno == logging.WARNING for record in records) == 2
+    assert sum(record.levelno == logging.DEBUG for record in records) == 2
+    assert sum("webhook 发送已恢复" in record.message for record in records) == 1
+    assert calls.count("bad") == calls.count("good") == 5

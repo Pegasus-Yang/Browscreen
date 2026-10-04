@@ -1,52 +1,95 @@
 # browscreen
 
+[![Python](https://img.shields.io/badge/Python-3.14%2B-blue.svg)](pyproject.toml)
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 简体中文 | [English](README.en.md)
 
-browscreen（browser＋screen）是浏览器画面与鼠标指针预览服务。它通过浏览器适配器连接已有浏览器，默认每 300 毫秒截图，读取工作目录中的 `.mouse` 合成指针；网页、图片接口和 webhook 共用同一张 PNG。当前支持 Chrome＋CDP，浏览器和并行环境由主服务管理。
+浏览器画面与鼠标指针预览服务。browscreen（browser＋screen）通过 Chrome DevTools Protocol（CDP）连接已有 Chrome，将当前视口截图和外部提供的指针坐标合成 PNG，用于网页预览、图片接口和 webhook 推送。
 
-服务采用 Python 3.14、FastAPI 和 Pydantic v2，一个进程、一个采集循环和一个最新帧缓存。适配器负责端点发现与截图，公共流程负责调度、合成和输出。
+## 功能
+
+- 默认每 300 毫秒采集当前视口，网页、图片接口和 webhook 共用最新帧。
+- 读取工作目录的 `.cdp` 连接浏览器，读取 `.mouse` 在 CSS 视口坐标上合成指针。
+- 浏览器失效后清空旧图，在限定时间内重读端点并恢复采集。
+- 正常退出时清空已有 `.mouse`，保留 `.cdp` 和外部浏览器。
+
+服务采用 Python 3.14、FastAPI 和 Pydantic v2，一个进程运行一个采集循环。浏览器启动、页面导航和环境隔离由调用方管理；预览页只读，不转发鼠标或键盘操作。
+
+## 安装
+
+准备 `uv` 和 Python 3.14，从 GitHub 获取源码后安装：
+
+```sh
+git clone https://github.com/Pegasus-Yang/Browscreen.git
+cd Browscreen
+uv sync --locked --no-dev \
+  -i http://mirrors.aliyun.com/pypi/simple/ \
+  --trusted-host mirrors.aliyun.com
+.venv/bin/browscreen version
+```
+
+需要安装 Python 时先执行 `uv python install 3.14`。当前安装方式为源码或自行构建的 wheel；详见[安装与运行](doc/deployment/安装与运行.md)。
 
 ## 快速开始
 
-在项目根目录安装：
+准备一个已有工作目录，以及启用了远程调试、包含打开页面的 Chrome。将实际调试地址写入 `.cdp`：
 
 ```sh
-uv sync --locked --group dev \
-  -i http://mirrors.aliyun.com/pypi/simple/ \
-  --trusted-host mirrors.aliyun.com
+work_dir="/absolute/path/to/workspace"
+printf '%s\n' 'http://127.0.0.1:9222' > "$work_dir/.cdp"
+uv run --no-sync browscreen --work-dir "$work_dir"
 ```
 
-外部系统准备已有工作目录，将 Chrome 调试地址（例如 `http://127.0.0.1:9222`）写入其中的 `.cdp`，然后启动：
+打开 `http://127.0.0.1:8000/` 查看画面。另一个终端向同一目录的 `.mouse` 写入 `320,180`，即可在下一个新帧显示指针。工作目录和 Chrome 由外部系统准备，示例路径和端口需按实际环境替换。
 
-```sh
-uv run --no-sync browscreen --work-dir /absolute/path/to/workspace
-```
+`.cdp` 尚未可用时 HTTP 保持可访问，默认等待 60 秒，等待预算持续到首个有效 PNG 生成。超时后修正端点并重启服务。
 
-打开 `http://127.0.0.1:8000/`。向该目录的 `.mouse` 写入 `320,180` 即可显示指针。`.cdp` 尚未可用时，服务保持 HTTP 可访问，默认等待 60 秒；超时后修正端点并重启。
+## 命令行
 
-## 接口与运行约定
+安装后提供一个 `browscreen` 命令。在源码安装环境中，可通过 `.venv/bin/browscreen` 或 `uv run --no-sync browscreen` 调用。
+
+| 命令 | 用途 |
+| --- | --- |
+| `browscreen --help` | 查看全部命令与参数 |
+| `browscreen version` / `browscreen --version` | 查询安装版本并退出，无需工作目录 |
+| `browscreen --work-dir <目录>` | 启动服务，默认 INFO 日志 |
+| `browscreen -v --work-dir <目录>` | 启动服务并开启 DEBUG 和 HTTP 访问日志 |
+
+默认省略网页轮询、HTTPX 请求和重复重试细节；状态变化、超时及异常仍会记录。同一 webhook 连续失败仅首次告警，恢复后记录一次；每帧仍按原规则发送。完整参数与日志说明见[命令行参考](doc/reference/命令行.md)。
+
+## HTTP 接口
 
 | 接口 | 用途 |
 | --- | --- |
 | `GET /` | 只读网页预览 |
 | `GET /api/screenshot` | 最新合成 PNG，附带帧编号、UTC 采集开始时间和 `no-store` |
-| `POST /api/webhooks` | 规范化注册 HTTP(S) 地址，向后续新帧逐地址发送 PNG |
+| `POST /api/webhooks` | 注册 HTTP(S) 接收地址，向后续新帧发送 PNG |
 
-截图与发送顺序执行。慢 webhook 会降低采集频率，每帧仍尝试推送，发送最长 3 秒。连接失效后清空旧图、重新读取端点并恢复；注册保留至进程结束。正常停止或 SIGINT／SIGTERM 优雅退出时，已有 `.mouse` 内容清空，`.cdp` 和外部 Chrome 保留。
+截图与发送顺序执行，每帧向所有接收地址并发尝试一次。慢 webhook 会降低采集频率，每次发送最多等待 3 秒；失败不自动重试、不跟随重定向。注册保留至进程退出。协议与错误码见[使用说明](doc/user-guide/使用说明.md)。
 
-每轮连接等待持续到首个有效帧生成，连续截图失败会按间隔重试并在预算耗尽后停止。预览支持历史缓存恢复、5 秒读取超时和重复帧跳过加载；采集任务异常停止时返回 `capture_failed`，提示检查日志后重启。
+## 文档
 
-## 文档与验证
+- [安装与运行](doc/deployment/安装与运行.md)：环境、安装、启动、退出和构建。
+- [命令行参考](doc/reference/命令行.md)：命令、参数和日志级别。
+- [使用说明](doc/user-guide/使用说明.md)：文件协议、预览、图片和 webhook。
+- [文档导航](doc/README.md)：完整阅读路线和技术设计。
 
-- [安装与运行](doc/deployment/安装与运行.md)：环境、参数、启动和构建。
-- [使用说明](doc/user-guide/使用说明.md)：文件协议、图片和 webhook。
-- [设计方案](doc/design/设计方案.md)：适配器边界、状态和几何契约。
-- [实施方案](doc/design/具体实施方案.md)：实施步骤和验证方法。
+## 开发与贡献
 
-完整导航见[doc/README.md](doc/README.md)。运行自动验证：
-
-完整验证需同时具备 Node.js 22 或更高版本；预览回归由 pytest 调用 Node 内置测试运行器，无 npm 依赖。
+开发环境需要 Node.js 22 或更高版本，以运行预览脚本回归，无需 npm 依赖：
 
 ```sh
+uv sync --locked --group dev \
+  -i http://mirrors.aliyun.com/pypi/simple/ \
+  --trusted-host mirrors.aliyun.com
 .venv/bin/python -m pytest -q -W error
 ```
+
+默认测试使用模拟浏览器端点；真实 Chrome 验证需要另行执行。缺少 Node.js 时预览测试会跳过，不代表前端验证通过。
+
+问题和建议请提交到 [GitHub Issues](https://github.com/Pegasus-Yang/Browscreen/issues)。提交改动前请阅读[贡献指南](CONTRIBUTING.md)。项目由 [Pegasus-Yang](https://github.com/Pegasus-Yang) 维护。
+
+## 许可证
+
+项目采用 [MIT 许可证](LICENSE)。

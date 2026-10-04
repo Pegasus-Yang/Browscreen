@@ -46,7 +46,7 @@ async def cdp_server(png_bytes):
 
 @pytest.mark.parametrize("endpoint", ["http://☃.example", "http://\x00host/", "http://[v1.example]/"])
 async def test_invalid_httpx_endpoint_recovers_after_file_correction(tmp_path, cdp_server, endpoint, caplog, wait_for):
-    caplog.set_level(level=logging.INFO, logger="browscreen.capture")
+    caplog.set_level(level=logging.DEBUG, logger="browscreen.capture")
     path = tmp_path / ".cdp"
     path.write_text(data=endpoint, encoding="utf-8")
     app = create_app(settings=Settings(work_dir=tmp_path, interval_ms=10, connect_wait_timeout_s=0.5))

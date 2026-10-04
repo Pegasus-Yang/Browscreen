@@ -18,6 +18,7 @@ class Settings(BaseModel):
     connect_wait_timeout_s: float = Field(default=60, gt=0, allow_inf_nan=False)
     host: str = Field(default="127.0.0.1", min_length=1)
     port: int = Field(default=8000, ge=1, le=65535)
+    verbose: bool = False
 
     @field_validator("work_dir", mode="before")
     @classmethod
