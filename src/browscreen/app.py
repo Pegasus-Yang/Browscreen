@@ -4,6 +4,7 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from importlib.resources import files
+from time import monotonic
 
 import httpx
 from fastapi import FastAPI, Response
@@ -30,39 +31,63 @@ def create_app(*, settings: Settings, adapter: BrowserAdapter | None = None, cli
     """
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        recorder = None
+        if settings.record:
+            from browscreen.recording import VideoRecorder
+
+            recorder = VideoRecorder(settings=settings)
+            await recorder.prepare()
         http_client = client if client is not None else httpx.AsyncClient(timeout=3, follow_redirects=False, trust_env=False)
         browser = adapter if adapter is not None else ADAPTER_FACTORIES[settings.adapter](client=http_client)
-        service = CaptureService(settings=settings, adapter=browser, client=http_client)
+        service = CaptureService(settings=settings, adapter=browser, client=http_client, recorder=recorder)
         app.state.capture = service
 
         async def capture() -> None:
             """立即报告未预期的任务异常，并停止提供旧图。"""
+            stopped_at = None
+            reason = None
             try:
                 await service.run()
+                if service.state == "timed_out":
+                    reason = "等待浏览器连接或画面恢复超时"
             except Exception:
+                stopped_at = monotonic()
+                reason = "采集任务异常停止"
                 service.current_frame = None
                 service.state = "failed"
                 logger.exception("采集任务异常停止")
                 await service.disconnect()
+            finally:
+                if recorder is not None:
+                    await recorder.finish(stopped_at=stopped_at if stopped_at is not None else monotonic(), reason=reason)
 
         task = asyncio.create_task(coro=capture(), name="browscreen-capture")
         try:
             yield
         finally:
-            task.cancel()
             try:
-                await task
-            except asyncio.CancelledError:
-                pass
-            except Exception:
-                logger.exception("采集任务退出时报告错误")
-            await service.disconnect()
-            try:
-                await http_client.aclose()
-            except Exception:
-                logger.exception("HTTP 客户端关闭失败")
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+                except Exception:
+                    logger.exception("采集任务退出时报告错误")
+                if recorder is not None:
+                    try:
+                        await recorder.finish(stopped_at=monotonic())
+                    except Exception:
+                        logger.exception("视频录制退出清理失败")
+                await service.disconnect()
+                try:
+                    await http_client.aclose()
+                except Exception:
+                    logger.exception("HTTP 客户端关闭失败")
+                finally:
+                    await asyncio.to_thread(clear_mouse, path=settings.work_dir / ".mouse")
             finally:
-                await asyncio.to_thread(clear_mouse, path=settings.work_dir / ".mouse")
+                if recorder is not None:
+                    recorder.report()
 
     app = FastAPI(title="browscreen", version=__version__, lifespan=lifespan)
     preview = files(anchor="browscreen").joinpath("preview.html").read_text(encoding="utf-8").replace("__INTERVAL_MS__", str(settings.interval_ms))

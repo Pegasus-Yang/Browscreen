@@ -13,6 +13,7 @@
 - 读取工作目录的 `.cdp` 连接浏览器，读取 `.mouse` 在 CSS 视口坐标上合成指针。
 - 浏览器失效后清空旧图，在限定时间内重读端点并恢复采集。
 - 正常退出时清空已有 `.mouse`，保留 `.cdp` 和外部浏览器。
+- 可选 MP4 视频录制，复用含指针的截图，正常结束后输出文件路径。
 
 服务采用 Python 3.14、FastAPI 和 Pydantic v2，一个进程运行一个采集循环。浏览器启动、页面导航和环境隔离由调用方管理；预览页只读，不转发鼠标或键盘操作。
 
@@ -44,6 +45,21 @@ uv run --no-sync browscreen --work-dir "$work_dir"
 打开 `http://127.0.0.1:8000/` 查看画面。另一个终端向同一目录的 `.mouse` 写入 `320,180`，即可在下一个新帧显示指针。工作目录和 Chrome 由外部系统准备，示例路径和端口需按实际环境替换。
 
 `.cdp` 尚未可用时 HTTP 保持可访问，默认等待 60 秒，等待预算持续到首个有效 PNG 生成。超时后修正端点并重启服务。
+
+## 可选视频录制
+
+基础安装默认不录制，也不安装视频依赖。需要录制时先安装 `video` extra，再显式开启：
+
+```sh
+uv sync --locked --no-dev --extra video \
+  -i http://mirrors.aliyun.com/pypi/simple/ \
+  --trusted-host mirrors.aliyun.com
+uv run --no-sync browscreen --work-dir /absolute/path/to/workspace --record
+```
+
+默认在系统临时目录生成唯一的 MP4，正常退出后输出绝对路径并保留文件。可追加 `--record-output /absolute/path/to/recordings/session.mp4` 指定文件；父目录须已存在，已有文件不会被覆盖。开启录制但缺少依赖时，服务会提示安装 `browscreen[video]` 并以退出码 `1` 结束。
+
+录制保留实际采样时间；编码耗时可能降低采集频率。通过 SIGINT 或 SIGTERM 正常停止并等待退出，才能完成视频收尾。时间轴、尺寸变化和失败行为见[使用说明](doc/user-guide/使用说明.md#可选视频录制)。
 
 ## 命令行
 
@@ -88,6 +104,8 @@ uv sync --locked --group dev \
 ```
 
 默认测试使用模拟浏览器端点；真实 Chrome 验证需要另行执行。缺少 Node.js 时预览测试会跳过，不代表前端验证通过。
+
+验证录制功能时，在同步命令中增加 `--extra video`；缺少该依赖时真实视频测试会跳过，不能据此确认录制功能通过。
 
 问题和建议请提交到 [GitHub Issues](https://github.com/Pegasus-Yang/Browscreen/issues)。提交改动前请阅读[贡献指南](CONTRIBUTING.md)。项目由 [Pegasus-Yang](https://github.com/Pegasus-Yang) 维护。
 

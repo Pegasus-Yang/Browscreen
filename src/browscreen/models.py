@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, HttpUrl, field_validator
+from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, HttpUrl, field_validator, model_validator
 
 
 class Settings(BaseModel):
@@ -19,6 +19,8 @@ class Settings(BaseModel):
     host: str = Field(default="127.0.0.1", min_length=1)
     port: int = Field(default=8000, ge=1, le=65535)
     verbose: bool = False
+    record: bool = False
+    record_output: Path | None = None
 
     @field_validator("work_dir", mode="before")
     @classmethod
@@ -31,6 +33,26 @@ class Settings(BaseModel):
         if not path.is_dir():
             raise ValueError(f"工作目录不存在或不是目录：{path}")
         return path
+
+    @field_validator("record_output", mode="before")
+    @classmethod
+    def validate_record_output(cls, value: str | Path | None) -> Path | None:
+        """解析 MP4 文件路径，要求父目录已经存在。"""
+        if value is None:
+            return None
+        path = Path(value).expanduser().resolve()
+        if path.is_dir() or path.suffix.lower() != ".mp4":
+            raise ValueError("--record-output 必须是完整的 .mp4 文件路径")
+        if not path.parent.is_dir():
+            raise ValueError(f"录制文件的父目录不存在：{path.parent}")
+        return path
+
+    @model_validator(mode="after")
+    def validate_record_switch(self) -> "Settings":
+        """输出位置不能隐式开启录制。"""
+        if self.record_output is not None and not self.record:
+            raise ValueError("使用 --record-output 时必须同时提供 --record")
+        return self
 
 
 class MousePosition(BaseModel):

@@ -13,6 +13,7 @@ A browser screenshot and mouse pointer preview service. browscreen (browser + sc
 - Read the browser endpoint from `.cdp` and overlay CSS viewport coordinates from `.mouse`.
 - Clear stale images and recover browser connections within a bounded waiting budget.
 - Clear an existing `.mouse` during graceful shutdown, preserving `.cdp` and the external browser.
+- Optionally record composed screenshots to MP4 and report the file path on shutdown.
 
 The service uses Python 3.14, FastAPI, and Pydantic v2, with one capture loop per process. The host application manages browser startup, navigation, and environment isolation. The read-only preview does not forward mouse or keyboard input.
 
@@ -44,6 +45,21 @@ uv run --no-sync browscreen --work-dir "$work_dir"
 Open `http://127.0.0.1:8000/`. From another terminal, write `320,180` to the same directory's `.mouse` file to display the pointer in the next frame. Replace the example path and ports with those managed by your application.
 
 HTTP stays available while the browser is unavailable. The default 60-second startup budget includes connection and creation of the first valid PNG. After timeout, correct the endpoint and restart the service.
+
+## Optional video recording
+
+The base installation does not install video dependencies or enable recording. Install the `video` extra and explicitly enable recording:
+
+```sh
+uv sync --locked --no-dev --extra video \
+  -i http://mirrors.aliyun.com/pypi/simple/ \
+  --trusted-host mirrors.aliyun.com
+uv run --no-sync browscreen --work-dir /absolute/path/to/workspace --record
+```
+
+By default, a unique MP4 is saved in the system temporary directory and retained after normal shutdown, when its absolute path is logged. Add `--record-output /absolute/path/to/recordings/session.mp4` to select a file. Its parent directory must exist; existing files are never overwritten. Enabling recording without its dependencies prints an installation hint for `browscreen[video]` and exits with code `1`.
+
+The video preserves actual sampling times. Encoding can reduce the capture rate. Send SIGINT or SIGTERM and wait for shutdown to finalize the video. See the [user guide](doc/user-guide/使用说明.en.md#optional-video-recording) for timing, resizing, and failure behavior.
 
 ## Command line
 
@@ -90,6 +106,8 @@ uv sync --locked --group dev \
 ```
 
 Standard tests use simulated browser endpoints. Real-Chrome verification is a separate procedure. Without Node.js, the preview test is explicitly skipped, so the result does not confirm frontend coverage.
+
+Add `--extra video` to the development sync command to test recording. Without it, actual video tests are skipped and recording has not been validated.
 
 Report bugs and suggestions through [GitHub Issues](https://github.com/Pegasus-Yang/Browscreen/issues). Read the [contribution guide](CONTRIBUTING.md) before submitting changes. Maintained by [Pegasus-Yang](https://github.com/Pegasus-Yang).
 

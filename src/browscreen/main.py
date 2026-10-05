@@ -27,6 +27,8 @@ def parse_settings(*, argv: list[str] | None = None) -> Settings:
     parser.add_argument("--connect-wait-timeout-s", type=float, default=60, help="每轮等待首个有效帧的上限（秒）")
     parser.add_argument("--host", default="127.0.0.1", help="HTTP 监听地址（默认 127.0.0.1）")
     parser.add_argument("--port", type=int, default=8000, help="HTTP 端口（默认 8000）")
+    parser.add_argument("--record", action="store_true", help="开启 MP4 视频录制（需安装 browscreen[video]）")
+    parser.add_argument("--record-output", help="录制文件的完整 .mp4 路径，默认保存到系统临时目录；需同时提供 --record")
     arguments = parser.parse_args(args=argv)
     if arguments.command == "version":
         print(f"browscreen {__version__}")
@@ -55,5 +57,13 @@ def main() -> None:
     """处理命令，或启动一个 worker 和一个采集循环。"""
     settings = parse_settings()
     configure_logging(verbose=settings.verbose)
+    if settings.record:
+        from browscreen.recording import RecordingStartupError, load_video_backend
+
+        try:
+            load_video_backend()
+        except RecordingStartupError as error:
+            logging.getLogger(__name__).error(msg=str(error))
+            raise SystemExit(1) from None
     uvicorn.run(app=create_app(settings=settings), host=settings.host, port=settings.port, workers=1,
                 log_level="debug" if settings.verbose else "info", access_log=settings.verbose)

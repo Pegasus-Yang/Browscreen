@@ -5,6 +5,7 @@ import logging
 from asyncio import sleep
 from datetime import UTC, datetime
 from time import monotonic
+from typing import TYPE_CHECKING
 
 import httpx
 
@@ -13,6 +14,9 @@ from browscreen.files import read_endpoint, read_mouse
 from browscreen.imaging import compose_screenshot
 from browscreen.models import CurrentFrame, ErrorResponse, Settings
 from browscreen.webhooks import push_frame
+
+if TYPE_CHECKING:
+    from browscreen.recording import VideoRecorder
 
 logger = logging.getLogger(__name__)
 OPERATION_TIMEOUT_S = 5
@@ -24,12 +28,15 @@ class CaptureService:
     :param settings: 实例配置。
     :param adapter: 已由应用选定的适配器。
     :param client: 应用拥有的共享 HTTP 客户端。
+    :param recorder: 开启录制时注入的录制器；None 表示沿用基础采集。
     """
 
-    def __init__(self, *, settings: Settings, adapter: BrowserAdapter, client: httpx.AsyncClient) -> None:
+    def __init__(self, *, settings: Settings, adapter: BrowserAdapter, client: httpx.AsyncClient,
+                 recorder: "VideoRecorder | None" = None) -> None:
         self.settings = settings
         self.adapter = adapter
         self.client = client
+        self.recorder = recorder
         self.state = "waiting"
         self.current_frame: CurrentFrame | None = None
         self.frame_id = 0
@@ -103,6 +110,8 @@ class CaptureService:
                     frame = CurrentFrame(frame_id=self.frame_id, capture_started_at=timestamp, png_bytes=png)
                     urls = tuple(self.webhooks)
                     self.current_frame = frame
+                    if self.recorder is not None:
+                        await self.recorder.append(frame=frame, captured_at=started)
                     await push_frame(client=self.client, urls=urls, frame=frame, failed_urls=self.failed_webhooks)
                     await sleep(delay=max(0, self.settings.interval_ms / 1000 - (monotonic() - started)))
             except (BrowserAdapterError, TimeoutError) as error:

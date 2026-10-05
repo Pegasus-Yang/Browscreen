@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "browscreen"
-version = "0.2.1"
+version = "0.3.0"
 description = "浏览器视口截图与鼠标指针预览服务"
 readme = "README.md"
 license = "MIT"
@@ -19,6 +19,9 @@ dependencies = [
   "httpx>=0.28,<1",
   "pillow>=12,<13",
 ]
+
+[project.optional-dependencies]
+video = ["av>=19.0.1,<20"]
 
 [project.urls]
 Homepage = "https://github.com/Pegasus-Yang/Browscreen"
