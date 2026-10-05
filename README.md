@@ -1,9 +1,9 @@
 # browscreen
 
-[![Python](https://img.shields.io/badge/Python-3.14%2B-blue.svg)](pyproject.toml)
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.14%2B-blue.svg)](https://github.com/Pegasus-Yang/Browscreen/blob/main/pyproject.toml)
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/Pegasus-Yang/Browscreen/blob/main/LICENSE)
 
-简体中文 | [English](README.en.md)
+简体中文 | [English](https://github.com/Pegasus-Yang/Browscreen/blob/main/README.en.md)
 
 浏览器画面与鼠标指针预览服务。browscreen（browser＋screen）通过 Chrome DevTools Protocol（CDP）连接已有 Chrome，将当前视口截图和外部提供的指针坐标合成 PNG，用于网页预览、图片接口和 webhook 推送。
 
@@ -30,7 +30,7 @@ uv sync --locked --no-dev \
 .venv/bin/browscreen version
 ```
 
-需要安装 Python 时先执行 `uv python install 3.14`。当前安装方式为源码或自行构建的 wheel；详见[安装与运行](doc/deployment/安装与运行.md)。
+需要安装 Python 时先执行 `uv python install 3.14`。当前安装方式为源码或自行构建的 wheel；详见[安装与运行](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/deployment/%E5%AE%89%E8%A3%85%E4%B8%8E%E8%BF%90%E8%A1%8C.md)。
 
 ## 快速开始
 
@@ -59,7 +59,7 @@ uv run --no-sync browscreen --work-dir /absolute/path/to/workspace --record
 
 默认在系统临时目录生成唯一的 MP4，正常退出后输出绝对路径并保留文件。可追加 `--record-output /absolute/path/to/recordings/session.mp4` 指定文件；父目录须已存在，已有文件不会被覆盖。开启录制但缺少依赖时，服务会提示安装 `browscreen[video]` 并以退出码 `1` 结束。
 
-录制保留实际采样时间；编码耗时可能降低采集频率。通过 SIGINT 或 SIGTERM 正常停止并等待退出，才能完成视频收尾。时间轴、尺寸变化和失败行为见[使用说明](doc/user-guide/使用说明.md#可选视频录制)。
+录制保留实际采样时间；编码耗时可能降低采集频率。通过 SIGINT 或 SIGTERM 正常停止并等待退出，才能完成视频收尾。时间轴、尺寸变化和失败行为见[使用说明](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md#%E5%8F%AF%E9%80%89%E8%A7%86%E9%A2%91%E5%BD%95%E5%88%B6)。
 
 ## 命令行
 
@@ -72,7 +72,7 @@ uv run --no-sync browscreen --work-dir /absolute/path/to/workspace --record
 | `browscreen --work-dir <目录>` | 启动服务，默认 INFO 日志 |
 | `browscreen -v --work-dir <目录>` | 启动服务并开启 DEBUG 和 HTTP 访问日志 |
 
-默认省略网页轮询、HTTPX 请求和重复重试细节；状态变化、超时及异常仍会记录。同一 webhook 连续失败仅首次告警，恢复后记录一次；每帧仍按原规则发送。完整参数与日志说明见[命令行参考](doc/reference/命令行.md)。
+默认省略网页轮询、HTTPX 请求和重复重试细节；状态变化、超时及异常仍会记录。同一 webhook 连续失败仅首次告警，恢复后记录一次；每帧仍按原规则发送。完整参数与日志说明见[命令行参考](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/reference/%E5%91%BD%E4%BB%A4%E8%A1%8C.md)。
 
 ## HTTP 接口
 
@@ -82,15 +82,15 @@ uv run --no-sync browscreen --work-dir /absolute/path/to/workspace --record
 | `GET /api/screenshot` | 最新合成 PNG，附带帧编号、UTC 采集开始时间和 `no-store` |
 | `POST /api/webhooks` | 注册 HTTP(S) 接收地址，向后续新帧发送 PNG |
 
-截图与发送顺序执行，每帧向所有接收地址并发尝试一次。慢 webhook 会降低采集频率，每次发送最多等待 3 秒；失败不自动重试、不跟随重定向。注册保留至进程退出。协议与错误码见[使用说明](doc/user-guide/使用说明.md)。
+截图与发送顺序执行，每帧向所有接收地址并发尝试一次。慢 webhook 会降低采集频率，每次发送最多等待 3 秒；失败不自动重试、不跟随重定向。注册保留至进程退出。协议与错误码见[使用说明](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md)。
 
 ## 文档
 
-- [安装与运行](doc/deployment/安装与运行.md)：环境、安装、启动、退出和构建。
-- [命令行参考](doc/reference/命令行.md)：命令、参数和日志级别。
-- [使用说明](doc/user-guide/使用说明.md)：文件协议、预览、图片和 webhook。
-- [文档导航](doc/README.md)：完整阅读路线和技术设计。
-- [版本变动历史](changelog.md)：各版本的新增、变更和修复。
+- [安装与运行](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/deployment/%E5%AE%89%E8%A3%85%E4%B8%8E%E8%BF%90%E8%A1%8C.md)：环境、安装、启动、退出和构建。
+- [命令行参考](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/reference/%E5%91%BD%E4%BB%A4%E8%A1%8C.md)：命令、参数和日志级别。
+- [使用说明](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md)：文件协议、预览、图片和 webhook。
+- [文档导航](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/README.md)：完整阅读路线和技术设计。
+- [版本变动历史](https://github.com/Pegasus-Yang/Browscreen/blob/main/changelog.md)：各版本的新增、变更和修复。
 
 ## 开发与贡献
 
@@ -107,8 +107,8 @@ uv sync --locked --group dev \
 
 验证录制功能时，在同步命令中增加 `--extra video`；缺少该依赖时真实视频测试会跳过，不能据此确认录制功能通过。
 
-问题和建议请提交到 [GitHub Issues](https://github.com/Pegasus-Yang/Browscreen/issues)。提交改动前请阅读[贡献指南](CONTRIBUTING.md)。项目由 [Pegasus-Yang](https://github.com/Pegasus-Yang) 维护。
+问题和建议请提交到 [GitHub Issues](https://github.com/Pegasus-Yang/Browscreen/issues)。提交改动前请阅读[贡献指南](https://github.com/Pegasus-Yang/Browscreen/blob/main/CONTRIBUTING.md)。项目由 [Pegasus-Yang](https://github.com/Pegasus-Yang) 维护。
 
 ## 许可证
 
-项目采用 [MIT 许可证](LICENSE)。
+项目采用 [MIT 许可证](https://github.com/Pegasus-Yang/Browscreen/blob/main/LICENSE)。

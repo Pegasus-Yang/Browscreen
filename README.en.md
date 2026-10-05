@@ -1,9 +1,9 @@
 # browscreen
 
-[![Python](https://img.shields.io/badge/Python-3.14%2B-blue.svg)](pyproject.toml)
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.14%2B-blue.svg)](https://github.com/Pegasus-Yang/Browscreen/blob/main/pyproject.toml)
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/Pegasus-Yang/Browscreen/blob/main/LICENSE)
 
-[简体中文](README.md) | English
+[简体中文](https://github.com/Pegasus-Yang/Browscreen/blob/main/README.md) | English
 
 A browser screenshot and mouse pointer preview service. browscreen (browser + screen) connects to an existing Chrome instance through the Chrome DevTools Protocol (CDP), combines viewport screenshots with externally supplied pointer coordinates, and shares each PNG through a web preview, screenshot API, and webhooks.
 
@@ -30,7 +30,7 @@ uv sync --locked --no-dev \
 .venv/bin/browscreen version
 ```
 
-If needed, install Python first with `uv python install 3.14`. Install from source or a locally built wheel; see [installation and deployment](doc/deployment/安装与运行.en.md) for details.
+If needed, install Python first with `uv python install 3.14`. Install from source or a locally built wheel; see [installation and deployment](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/deployment/%E5%AE%89%E8%A3%85%E4%B8%8E%E8%BF%90%E8%A1%8C.en.md) for details.
 
 ## Quick start
 
@@ -59,7 +59,7 @@ uv run --no-sync browscreen --work-dir /absolute/path/to/workspace --record
 
 By default, a unique MP4 is saved in the system temporary directory and retained after normal shutdown, when its absolute path is logged. Add `--record-output /absolute/path/to/recordings/session.mp4` to select a file. Its parent directory must exist; existing files are never overwritten. Enabling recording without its dependencies prints an installation hint for `browscreen[video]` and exits with code `1`.
 
-The video preserves actual sampling times. Encoding can reduce the capture rate. Send SIGINT or SIGTERM and wait for shutdown to finalize the video. See the [user guide](doc/user-guide/使用说明.en.md#optional-video-recording) for timing, resizing, and failure behavior.
+The video preserves actual sampling times. Encoding can reduce the capture rate. Send SIGINT or SIGTERM and wait for shutdown to finalize the video. See the [user guide](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.en.md#optional-video-recording) for timing, resizing, and failure behavior.
 
 ## Command line
 
@@ -72,7 +72,7 @@ Installation provides one `browscreen` command. For a source installation, use `
 | `browscreen --work-dir <directory>` | Start the service with INFO logging |
 | `browscreen -v --work-dir <directory>` | Start with DEBUG and HTTP access logs |
 
-Default logs omit preview polling, HTTPX requests, and repeated retry details. State changes, timeouts, and exceptions remain visible. A webhook's consecutive failures produce one warning followed by a recovery message; delivery is still attempted for every frame. See the [command-line reference](doc/reference/命令行.en.md) for all options and logging behavior.
+Default logs omit preview polling, HTTPX requests, and repeated retry details. State changes, timeouts, and exceptions remain visible. A webhook's consecutive failures produce one warning followed by a recovery message; delivery is still attempted for every frame. See the [command-line reference](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/reference/%E5%91%BD%E4%BB%A4%E8%A1%8C.en.md) for all options and logging behavior.
 
 ## HTTP interfaces
 
@@ -82,15 +82,15 @@ Default logs omit preview polling, HTTPX requests, and repeated retry details. S
 | `GET /api/screenshot` | Latest composed PNG, with frame ID, UTC capture start time, and `no-store` |
 | `POST /api/webhooks` | Register an HTTP(S) receiver for subsequent frames |
 
-Each capture waits for concurrent delivery attempts to all registered receivers. Slow receivers reduce the capture rate. Each delivery has a three-second total timeout, with no automatic retries or redirect following. Registrations last until process exit. See the [user guide](doc/user-guide/使用说明.en.md) for protocols and error codes.
+Each capture waits for concurrent delivery attempts to all registered receivers. Slow receivers reduce the capture rate. Each delivery has a three-second total timeout, with no automatic retries or redirect following. Registrations last until process exit. See the [user guide](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.en.md) for protocols and error codes.
 
 ## Documentation
 
-- [Installation and deployment](doc/deployment/安装与运行.en.md): prerequisites, installation, startup, shutdown, and building.
-- [Command-line reference](doc/reference/命令行.en.md): commands, options, and logging levels.
-- [User guide](doc/user-guide/使用说明.en.md): exchange files, preview, screenshots, and webhooks.
-- [Documentation index](doc/README.md): reading routes and Chinese technical design documents.
-- [Changelog](changelog.md): additions, changes, and fixes by version, in Simplified Chinese.
+- [Installation and deployment](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/deployment/%E5%AE%89%E8%A3%85%E4%B8%8E%E8%BF%90%E8%A1%8C.en.md): prerequisites, installation, startup, shutdown, and building.
+- [Command-line reference](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/reference/%E5%91%BD%E4%BB%A4%E8%A1%8C.en.md): commands, options, and logging levels.
+- [User guide](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.en.md): exchange files, preview, screenshots, and webhooks.
+- [Documentation index](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/README.md): reading routes and Chinese technical design documents.
+- [Changelog](https://github.com/Pegasus-Yang/Browscreen/blob/main/changelog.md): additions, changes, and fixes by version, in Simplified Chinese.
 
 The preview UI, CLI help, and runtime messages are currently in Simplified Chinese. Use the stable API error `code` values for programmatic handling.
 
@@ -109,8 +109,8 @@ Standard tests use simulated browser endpoints. Real-Chrome verification is a se
 
 Add `--extra video` to the development sync command to test recording. Without it, actual video tests are skipped and recording has not been validated.
 
-Report bugs and suggestions through [GitHub Issues](https://github.com/Pegasus-Yang/Browscreen/issues). Read the [contribution guide](CONTRIBUTING.md) before submitting changes. Maintained by [Pegasus-Yang](https://github.com/Pegasus-Yang).
+Report bugs and suggestions through [GitHub Issues](https://github.com/Pegasus-Yang/Browscreen/issues). Read the [contribution guide](https://github.com/Pegasus-Yang/Browscreen/blob/main/CONTRIBUTING.md) before submitting changes. Maintained by [Pegasus-Yang](https://github.com/Pegasus-Yang).
 
 ## License
 
-Licensed under the [MIT License](LICENSE).
+Licensed under the [MIT License](https://github.com/Pegasus-Yang/Browscreen/blob/main/LICENSE).
