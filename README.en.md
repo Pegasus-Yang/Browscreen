@@ -89,6 +89,7 @@ Each capture waits for concurrent delivery attempts to all registered receivers.
 - [Installation and deployment](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/deployment/%E5%AE%89%E8%A3%85%E4%B8%8E%E8%BF%90%E8%A1%8C.en.md): prerequisites, installation, startup, shutdown, and building.
 - [Command-line reference](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/reference/%E5%91%BD%E4%BB%A4%E8%A1%8C.en.md): commands, options, and logging levels.
 - [User guide](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.en.md): exchange files, preview, screenshots, and webhooks.
+- [Floating preview example](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.en.md#floating-preview-window): copy HTML to show live screenshots at the bottom-right of an existing page.
 - [Documentation index](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/README.md): reading routes and Chinese technical design documents.
 - [Changelog](https://github.com/Pegasus-Yang/Browscreen/blob/main/changelog.md): additions, changes, and fixes by version, in Simplified Chinese.
 

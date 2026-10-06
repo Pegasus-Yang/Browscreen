@@ -89,6 +89,7 @@ uv run --no-sync browscreen --work-dir /absolute/path/to/workspace --record
 - [安装与运行](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/deployment/%E5%AE%89%E8%A3%85%E4%B8%8E%E8%BF%90%E8%A1%8C.md)：环境、安装、启动、退出和构建。
 - [命令行参考](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/reference/%E5%91%BD%E4%BB%A4%E8%A1%8C.md)：命令、参数和日志级别。
 - [使用说明](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md)：文件协议、预览、图片和 webhook。
+- [页面悬浮窗示例](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md#%E9%A1%B5%E9%9D%A2%E6%82%AC%E6%B5%AE%E7%AA%97%E7%A4%BA%E4%BE%8B)：复制 HTML，将实时画面显示在现有页面右下角。
 - [文档导航](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/README.md)：完整阅读路线和技术设计。
 - [版本变动历史](https://github.com/Pegasus-Yang/Browscreen/blob/main/changelog.md)：各版本的新增、变更和修复。
 
