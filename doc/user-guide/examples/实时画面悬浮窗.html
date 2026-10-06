@@ -15,24 +15,116 @@
 <body>
   <main>
     <h1>实时画面悬浮窗示例</h1>
-    <p>先启动 browscreen，确认浏览器能打开服务预览页，再将下面的 <code>iframe</code> 代码复制到自己的页面中。</p>
+    <p>先启动 browscreen，确认浏览器能打开服务预览页，再将“悬浮窗开始”到“悬浮窗结束”之间的代码复制到自己的页面中。</p>
     <p>将 <code>src</code> 改为浏览器可访问的服务根地址。默认连接本机 <code>http://127.0.0.1:8000/</code>；窗口复用服务预览页的自动刷新和状态提示。</p>
-    <p>滚动此页，悬浮窗仍固定在页面右下角。窗口是只读预览，鼠标和键盘操作不会转发给目标浏览器。</p>
+    <p>拖动标题栏移动窗口，拖动右下角调整大小；点击“放大”铺满可用区域，再次点击“还原”恢复。点击“关闭”移除预览。窗口是只读画面。</p>
   </main>
 
+  <!-- 悬浮窗开始 -->
+<style>
+  #browscreen-floating-window { position: fixed; right: 16px; bottom: 16px; width: min(480px, calc(100% - 32px)); height: min(480px, calc(100% - 32px)); display: flex; flex-direction: column; box-sizing: border-box; z-index: 10000; overflow: hidden; border: 1px solid #d1d5db; border-radius: 12px; background: #fff; box-shadow: 0 8px 32px #0002; font: 14px system-ui, sans-serif; color: #202632; }
+  #browscreen-floating-window .browscreen-titlebar { display: flex; align-items: center; gap: 8px; flex: 0 0 44px; padding: 0 10px 0 16px; border-bottom: 1px solid #e5e7eb; cursor: move; touch-action: none; user-select: none; }
+  #browscreen-floating-window .browscreen-caption { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  #browscreen-floating-window button { padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+  #browscreen-floating-window button:hover { background: #f3f4f6; }
+  #browscreen-floating-window button:focus-visible { outline: 2px solid #2563eb; }
+  #browscreen-floating-window iframe { flex: 1; min-height: 0; width: 100%; border: 0; background: #f3f4f6; }
+  #browscreen-floating-window .browscreen-resize { position: absolute; right: 0; bottom: 0; width: 24px; height: 24px; cursor: nwse-resize; touch-action: none; }
+  #browscreen-floating-window .browscreen-resize::after { content: ''; position: absolute; right: 6px; bottom: 6px; width: 10px; height: 10px; border-right: 2px solid #64748b; border-bottom: 2px solid #64748b; }
+  #browscreen-floating-window.browscreen-moving iframe { pointer-events: none; }
+  #browscreen-floating-window.browscreen-maximized .browscreen-resize { display: none; }
+  #browscreen-floating-window.browscreen-maximized .browscreen-titlebar { cursor: default; }
+</style>
+<section id="browscreen-floating-window" aria-label="浏览器实时画面">
+  <div class="browscreen-titlebar">
+    <span class="browscreen-caption">浏览器实时画面</span>
+    <button type="button" data-action="maximize" aria-pressed="false">放大</button>
+    <button type="button" data-action="close" aria-label="关闭实时画面">关闭</button>
+  </div>
   <!-- 修改 src 为当前浏览器可访问的 browscreen 服务根地址。 -->
-  <iframe
-    id="browscreen-preview-window"
-    src="http://127.0.0.1:8000/"
-    title="browscreen 实时画面（只读）"
-    style="
-      position: fixed; right: 16px; bottom: 16px;
-      width: min(420px, calc(100% - 32px));
-      height: min(400px, calc(100% - 32px));
-      box-sizing: border-box; z-index: 10000;
-      border: 1px solid #d1d5db; border-radius: 8px;
-      background: #f3f4f6; box-shadow: 0 4px 20px #0002;
-    "
-  ></iframe>
+  <iframe id="browscreen-preview-window" src="http://127.0.0.1:8000/" title="browscreen 实时画面（只读）"></iframe>
+  <div class="browscreen-resize" title="拖动右下角调整大小" aria-hidden="true"></div>
+</section>
+<script>
+(() => {
+  const panel = document.getElementById('browscreen-floating-window');
+  const titlebar = panel.querySelector('.browscreen-titlebar');
+  const grip = panel.querySelector('.browscreen-resize');
+  const maximize = panel.querySelector('[data-action="maximize"]');
+  const events = new AbortController();
+  const options = { signal: events.signal };
+  const margin = 16;
+  let rect, savedRect, gesture = null;
+  let expanded = false;
+  const viewport = () => ({ width: document.documentElement.clientWidth, height: document.documentElement.clientHeight });
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+  function draw(next) {
+    const size = viewport();
+    const maxWidth = size.width - margin * 2;
+    const maxHeight = size.height - margin * 2;
+    const width = clamp(next.width, Math.min(280, maxWidth), maxWidth);
+    const height = clamp(next.height, Math.min(200, maxHeight), maxHeight);
+    rect = { width, height, x: clamp(next.x, margin, size.width - margin - width), y: clamp(next.y, margin, size.height - margin - height) };
+    Object.assign(panel.style, { left: `${rect.x}px`, top: `${rect.y}px`, right: 'auto', bottom: 'auto', width: `${width}px`, height: `${height}px` });
+  }
+
+  function fillViewport() {
+    const size = viewport();
+    draw({ x: margin, y: margin, width: size.width - margin * 2, height: size.height - margin * 2 });
+  }
+
+  function start(event, mode) {
+    if (!event.isPrimary || event.button !== 0 || expanded || event.target.closest('button')) return;
+    gesture = { mode, pointerId: event.pointerId, handle: event.currentTarget, x: event.clientX, y: event.clientY, rect: { ...rect } };
+    gesture.handle.setPointerCapture(event.pointerId);
+    panel.classList.add('browscreen-moving');
+    event.preventDefault();
+  }
+
+  function move(event) {
+    if (!gesture || event.pointerId !== gesture.pointerId) return;
+    const dx = event.clientX - gesture.x;
+    const dy = event.clientY - gesture.y;
+    const before = gesture.rect;
+    if (gesture.mode === 'drag') {
+      draw({ ...before, x: before.x + dx, y: before.y + dy });
+    } else {
+      const size = viewport();
+      draw({ ...before, width: clamp(before.width + dx, Math.min(280, size.width - margin * 2), size.width - margin - before.x), height: clamp(before.height + dy, Math.min(200, size.height - margin * 2), size.height - margin - before.y) });
+    }
+  }
+
+  function stop(event) {
+    if (!gesture || event.pointerId !== gesture.pointerId) return;
+    const { handle, pointerId } = gesture;
+    gesture = null;
+    panel.classList.remove('browscreen-moving');
+    if (handle.hasPointerCapture(pointerId)) handle.releasePointerCapture(pointerId);
+  }
+
+  for (const [handle, mode] of [[titlebar, 'drag'], [grip, 'resize']]) {
+    handle.addEventListener('pointerdown', event => start(event, mode), options);
+    handle.addEventListener('pointermove', move, options);
+    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) handle.addEventListener(type, stop, options);
+  }
+  maximize.addEventListener('click', () => {
+    expanded = !expanded;
+    if (expanded) { savedRect = { ...rect }; fillViewport(); }
+    else draw(savedRect);
+    panel.classList.toggle('browscreen-maximized', expanded);
+    maximize.textContent = expanded ? '还原' : '放大';
+    maximize.setAttribute('aria-pressed', String(expanded));
+  }, options);
+  panel.querySelector('[data-action="close"]').addEventListener('click', () => {
+    events.abort();
+    panel.remove();
+  }, options);
+  window.addEventListener('resize', () => expanded ? fillViewport() : draw(rect), options);
+  const size = viewport();
+  draw({ x: size.width - 496, y: size.height - 496, width: 480, height: 480 });
+})();
+</script>
+  <!-- 悬浮窗结束 -->
 </body>
 </html>

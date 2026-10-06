@@ -8,7 +8,7 @@ English documentation: [Project overview](../README.en.md) · [Installation and 
 | --- | --- | --- |
 | 安装运行 | [安装与运行](deployment/安装与运行.md) / [English](deployment/安装与运行.en.md) | Python 3.14、uv、启动与构建 |
 | 使用指南 | [使用说明](user-guide/使用说明.md) / [English](user-guide/使用说明.en.md) | 文件、预览、图片接口与 webhook |
-| 使用示例 | [页面悬浮窗](user-guide/使用说明.md#页面悬浮窗示例) / [English](user-guide/使用说明.en.md#floating-preview-window) / [完整 HTML](user-guide/examples/实时画面悬浮窗.html) | 复制代码，在现有网页右下角显示实时画面 |
+| 使用示例 | [页面悬浮窗](user-guide/使用说明.md#页面悬浮窗示例) / [English](user-guide/使用说明.en.md#floating-preview-window) / [完整 HTML](user-guide/examples/实时画面悬浮窗.html) | 实时画面、拖动、调整大小、放大／还原和关闭 |
 | 命令参考 | [命令行](reference/命令行.md) / [English](reference/命令行.en.md) | 已安装命令、启动参数、版本查询和日志级别 |
 | 技术设计 | [设计方案](design/设计方案.md) | 适配器、状态、坐标和接口契约 |
 | 实施计划 | [具体实施方案](design/具体实施方案.md) | 七阶段实施和本机验收步骤 |
