@@ -11,7 +11,7 @@
 
 下图展示 [DSH-Test-Plugin](https://github.com/Pegasus-Yang/DSH-Test-Plugin) 接入 browscreen 的使用效果：在测试执行过程中，通过悬浮窗观察目标浏览器的实时画面和指针，体验类似 Codex 展示浏览器操作的悬浮预览。
 
-![DSH-Test-Plugin 中的浏览器实时画面悬浮窗，旁边保留对话记录和测试步骤进度](https://raw.githubusercontent.com/Pegasus-Yang/Browscreen/main/doc/user-guide/images/%E6%B5%8F%E8%A7%88%E5%99%A8%E5%AE%9E%E6%97%B6%E7%94%BB%E9%9D%A2.jpg)
+![DSH-Test-Plugin 中的浏览器实时画面悬浮窗，旁边保留对话记录和测试步骤进度](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/images/%E6%B5%8F%E8%A7%88%E5%99%A8%E5%AE%9E%E6%97%B6%E7%94%BB%E9%9D%A2.jpg?raw=true)
 
 图中的聊天、测试步骤和悬浮窗控件由 DSH-Test-Plugin 提供；浏览器操作由宿主驱动，browscreen 负责画面采集与指针合成，预览保持只读。自己的网页也可以通过 `iframe` 嵌入预览页，并加入拖动、缩放、放大／还原和关闭控件，参考[页面悬浮窗示例](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md#%E9%A1%B5%E9%9D%A2%E6%82%AC%E6%B5%AE%E7%AA%97%E7%A4%BA%E4%BE%8B)。
 
