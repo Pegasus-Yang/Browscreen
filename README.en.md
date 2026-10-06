@@ -7,6 +7,14 @@
 
 A browser screenshot and mouse pointer preview service. browscreen (browser + screen) connects to an existing Chrome instance through the Chrome DevTools Protocol (CDP), combines viewport screenshots with externally supplied pointer coordinates, and shares each PNG through a web preview, screenshot API, and webhooks.
 
+## Preview in action
+
+The screenshot below shows [DSH-Test-Plugin](https://github.com/Pegasus-Yang/DSH-Test-Plugin) integrating browscreen: a floating window displays the target browser's live image and pointer while tests run. The experience is similar to Codex's floating preview of browser activity.
+
+![DSH-Test-Plugin with a floating live browser preview alongside conversation records and test-step progress](https://raw.githubusercontent.com/Pegasus-Yang/Browscreen/main/doc/user-guide/images/%E6%B5%8F%E8%A7%88%E5%99%A8%E5%AE%9E%E6%97%B6%E7%94%BB%E9%9D%A2.jpg)
+
+The host plugin provides the conversation, test steps, and window controls. The host drives browser actions, while browscreen captures images and overlays the pointer; the preview remains read-only. Embed the preview page in your own website with an `iframe` and add dragging, resizing, maximize/restore, and close controls using the [floating preview example](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.en.md#floating-preview-window).
+
 ## Features
 
 - Capture the current viewport every 300 ms by default, with one shared latest frame.
