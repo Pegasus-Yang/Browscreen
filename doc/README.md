@@ -1,6 +1,6 @@
 # browscreen 文档导航
 
-English documentation: [Project overview](../README.en.md) · [Installation and deployment](deployment/安装与运行.en.md) · [Command-line reference](reference/命令行.en.md) · [User guide](user-guide/使用说明.en.md)
+简体中文 | [English](README.en.md)
 
 总览和快速开始见[项目入口](../README.md)。审核、阶段核验、验收记录及其证据仅保留在本地，不纳入 Git 版本管理。
 
@@ -10,6 +10,7 @@ English documentation: [Project overview](../README.en.md) · [Installation and 
 | 使用指南 | [使用说明](user-guide/使用说明.md) / [English](user-guide/使用说明.en.md) | 文件、预览、图片接口与 webhook |
 | 使用示例 | [页面悬浮窗](user-guide/使用说明.md#页面悬浮窗示例) / [English](user-guide/使用说明.en.md#floating-preview-window) / [完整 HTML](user-guide/examples/实时画面悬浮窗.html) | 实时画面、拖动、调整大小、放大／还原和关闭 |
 | 命令参考 | [命令行](reference/命令行.md) / [English](reference/命令行.en.md) | 已安装命令、启动参数、版本查询和日志级别 |
+| 发布维护 | [发布流程](deployment/发布流程.md) / [English](deployment/发布流程.en.md) | CI、原标签 Release、英文元数据、独立 PyPI 上传与验收 |
 | 技术设计 | [设计方案](design/设计方案.md) | 适配器、状态、坐标和接口契约 |
 | 实施计划 | [具体实施方案](design/具体实施方案.md) | 七阶段实施和本机验收步骤 |
 | 功能方案 | [可选视频录制实现方案](design/可选视频录制实现方案.md) | 0.3.0 录制功能的审核方案和验证设计；当前用法见使用说明 |

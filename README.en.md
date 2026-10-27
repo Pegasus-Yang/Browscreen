@@ -27,6 +27,21 @@ The service uses Python 3.14, FastAPI, and Pydantic v2, with one capture loop pe
 
 ## Installation
 
+### Install from PyPI
+
+Create a `.venv` in your deployment directory and install the published package:
+
+```sh
+uv venv --python 3.14 .venv
+uv pip install --python .venv/bin/python browscreen \
+  -i http://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com
+.venv/bin/browscreen version
+```
+
+Install `browscreen[video]` for recording. Mirrors may lag an initial upload; official PyPI is the source of publication status.
+
+### Install from source
+
 With `uv` and Python 3.14 available, clone and install the source:
 
 ```sh
@@ -38,7 +53,7 @@ uv sync --locked --no-dev \
 .venv/bin/browscreen version
 ```
 
-If needed, install Python first with `uv python install 3.14`. Install from source or a locally built wheel; see [installation and deployment](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/deployment/%E5%AE%89%E8%A3%85%E4%B8%8E%E8%BF%90%E8%A1%8C.en.md) for details.
+If needed, install Python first with `uv python install 3.14`. See [installation and deployment](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/deployment/%E5%AE%89%E8%A3%85%E4%B8%8E%E8%BF%90%E8%A1%8C.en.md) for published packages, source installations, and local wheels.
 
 ## Quick start
 
@@ -98,7 +113,8 @@ Each capture waits for concurrent delivery attempts to all registered receivers.
 - [Command-line reference](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/reference/%E5%91%BD%E4%BB%A4%E8%A1%8C.en.md): commands, options, and logging levels.
 - [User guide](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.en.md): exchange files, preview, screenshots, and webhooks.
 - [Floating preview example](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.en.md#floating-preview-window): show live screenshots with dragging, resizing, maximize/restore, and close controls.
-- [Documentation index](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/README.md): reading routes and Chinese technical design documents.
+- [Documentation index](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/README.en.md): reading routes and Chinese technical design documents.
+- [Publishing workflow](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/deployment/%E5%8F%91%E5%B8%83%E6%B5%81%E7%A8%8B.en.md): GitHub Actions, Release artifacts, and separate PyPI publication and verification.
 - [Changelog](https://github.com/Pegasus-Yang/Browscreen/blob/main/changelog.md): additions, changes, and fixes by version, in Simplified Chinese.
 
 The preview UI, CLI help, and runtime messages are currently in Simplified Chinese. Use the stable API error `code` values for programmatic handling.

@@ -1,0 +1,105 @@
+name: Release
+run-name: Release ${{ inputs.tag || github.ref_name }}
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '已有附注标签，例如 v0.3.2；从 main 运行本工作流'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: 验证原标签源码
+    uses: ./.github/workflows/validate.yml
+    with:
+      source_ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref }}
+      release_tag: ${{ inputs.tag || github.ref_name }}
+  publish:
+    name: 上传、回读并公开 GitHub Release
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+      VERSION: ${{ needs.validate.outputs.version }}
+      SOURCE_COMMIT: ${{ needs.validate.outputs.source_commit }}
+      WHEEL: ${{ needs.validate.outputs.wheel }}
+      SDIST: ${{ needs.validate.outputs.sdist }}
+    steps:
+      - name: 下载同一次验证的产物
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ needs.validate.outputs.artifact_name }}
+          path: dist
+      - name: 核对摘要、manifest 与远端标签
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,os,re
+          from pathlib import Path
+          root=Path('dist');version=os.environ['VERSION'];tag=os.environ['RELEASE_TAG']
+          assert re.fullmatch(r'\d+\.\d+\.\d+',version) and tag==f'v{version}'
+          assert re.fullmatch(r'[0-9a-f]{40}',os.environ['SOURCE_COMMIT'])
+          assert os.environ['WHEEL']==f'browscreen-{version}-py3-none-any.whl'
+          assert os.environ['SDIST']==f'browscreen-{version}.tar.gz'
+          packages={os.environ['WHEEL'],os.environ['SDIST']}
+          hashed=packages|{'release-manifest.json'}
+          assert {p.name for p in root.iterdir()}==hashed|{'SHA256SUMS','release-notes.md'}
+          records={}
+          for line in (root/'SHA256SUMS').read_text().splitlines():
+              digest,name=line.split('  ',1)
+              assert name in hashed and name not in records and re.fullmatch(r'[0-9a-f]{64}',digest)
+              assert hashlib.sha256((root/name).read_bytes()).hexdigest()==digest
+              records[name]=digest
+          assert set(records)==hashed
+          manifest=json.loads((root/'release-manifest.json').read_text())
+          assert manifest['distribution']=='browscreen' and manifest['version']==version
+          assert manifest['source_commit']==os.environ['SOURCE_COMMIT'] and manifest['release_tag']==tag
+          assert manifest['wheel']==os.environ['WHEEL'] and manifest['sdist']==os.environ['SDIST']
+          assert manifest['files']=={name:records[name] for name in packages}
+          PY
+          actual_commit=$(gh api "repos/$GH_REPO/commits/$RELEASE_TAG" --jq .sha)
+          if [[ "$actual_commit" != "$SOURCE_COMMIT" ]]; then
+            echo '::error::远端标签提交与已验证源码不一致。'
+            exit 1
+          fi
+          tag_type=$(gh api "repos/$GH_REPO/git/ref/tags/$RELEASE_TAG" --jq .object.type)
+          [[ "$tag_type" == tag ]] || { echo '::error::远端必须是附注标签。'; exit 1; }
+          # API 失败时直接停止；已存在的草稿和公开 Release 均不覆盖。
+          existing=$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" --jq '.[].tag_name')
+          if grep -Fxq -- "$RELEASE_TAG" <<< "$existing"; then
+            echo '::error::已有同标签的 Release 或草稿，请先核对已有状态。'
+            exit 1
+          fi
+      - name: 创建草稿并回读附件后公开
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$RELEASE_TAG" --verify-tag --draft \
+            --title "browscreen $VERSION" --notes-file dist/release-notes.md \
+            "dist/$WHEEL" "dist/$SDIST" dist/SHA256SUMS dist/release-manifest.json
+          downloaded="$RUNNER_TEMP/browscreen-release-download"
+          mkdir -p "$downloaded"
+          gh release download "$RELEASE_TAG" --dir "$downloaded"
+          cmp dist/SHA256SUMS "$downloaded/SHA256SUMS"
+          (cd "$downloaded" && sha256sum --check SHA256SUMS)
+          actual_commit=$(gh api "repos/$GH_REPO/commits/$RELEASE_TAG" --jq .sha)
+          [[ "$actual_commit" == "$SOURCE_COMMIT" ]] || { echo '::error::标签已变化，保留草稿供核对。'; exit 1; }
+          gh release edit "$RELEASE_TAG" --draft=false
+          gh release view "$RELEASE_TAG" --json url --jq .url >> "$GITHUB_STEP_SUMMARY"

@@ -27,6 +27,21 @@
 
 ## 安装
 
+### 从 PyPI 安装
+
+在部署目录中创建 `.venv`，安装已发布的包：
+
+```sh
+uv venv --python 3.14 .venv
+uv pip install --python .venv/bin/python browscreen \
+  -i http://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com
+.venv/bin/browscreen version
+```
+
+录制需要安装 `browscreen[video]`；镜像首次同步可能延迟，发布状态以官方 PyPI 为准。
+
+### 从源码安装
+
 准备 `uv` 和 Python 3.14，从 GitHub 获取源码后安装：
 
 ```sh
@@ -38,7 +53,7 @@ uv sync --locked --no-dev \
 .venv/bin/browscreen version
 ```
 
-需要安装 Python 时先执行 `uv python install 3.14`。当前安装方式为源码或自行构建的 wheel；详见[安装与运行](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/deployment/%E5%AE%89%E8%A3%85%E4%B8%8E%E8%BF%90%E8%A1%8C.md)。
+需要安装 Python 时先执行 `uv python install 3.14`。发布包、源码和本地 wheel 的完整安装步骤见[安装与运行](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/deployment/%E5%AE%89%E8%A3%85%E4%B8%8E%E8%BF%90%E8%A1%8C.md)。
 
 ## 快速开始
 
@@ -99,6 +114,7 @@ uv run --no-sync browscreen --work-dir /absolute/path/to/workspace --record
 - [使用说明](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md)：文件协议、预览、图片和 webhook。
 - [页面悬浮窗示例](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/user-guide/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md#%E9%A1%B5%E9%9D%A2%E6%82%AC%E6%B5%AE%E7%AA%97%E7%A4%BA%E4%BE%8B)：复制代码显示实时画面，支持拖动、调整大小、放大／还原和关闭。
 - [文档导航](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/README.md)：完整阅读路线和技术设计。
+- [发布流程](https://github.com/Pegasus-Yang/Browscreen/blob/main/doc/deployment/%E5%8F%91%E5%B8%83%E6%B5%81%E7%A8%8B.md)：GitHub Actions、Release 附件与独立 PyPI 发布和验收。
 - [版本变动历史](https://github.com/Pegasus-Yang/Browscreen/blob/main/changelog.md)：各版本的新增、变更和修复。
 
 ## 开发与贡献
